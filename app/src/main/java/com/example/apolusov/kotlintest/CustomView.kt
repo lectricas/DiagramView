@@ -1,11 +1,19 @@
 package com.example.apolusov.kotlintest
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.support.v4.view.MotionEventCompat
 import android.view.*
+import android.view.MotionEvent.INVALID_POINTER_ID
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.widget.OverScroller
 import timber.log.Timber
+import kotlin.math.roundToInt
 
 
 class CustomView : View {
@@ -15,7 +23,7 @@ class CustomView : View {
     private var scaleDetector: ScaleGestureDetector
 
     companion object {
-        const val INITIAL_SCROLL = 0f
+        const val INITIAL_SCROLL = 0
     }
 
     var currentScroll = INITIAL_SCROLL
@@ -23,10 +31,10 @@ class CustomView : View {
     private var series = listOf<PointM>()
     private var currentSeries = listOf<PointM>()
     private var pixelSeries = listOf<PointD>()
-    private var maxWidthInPoints = 0f
-    private var maxHeightInPoints = 0f
-    private var viewWidthInPixels = 0f
-    private var viewHeightInPixels = 0f
+    private var maxWidthInPoints = 0
+    private var maxHeightInPoints = 0
+    private var viewWidthInPixels = 0
+    private var viewHeightInPixels = 0
 
     val paint = Paint().apply {
         color = Color.BLACK
@@ -34,19 +42,24 @@ class CustomView : View {
     }
 
     //what this variable Do???
+    var currentItemCount = 0
+
     var startPageLeft = 0
-    var startPageRight = 0
     var sliceLeft = 0
     var sliceRight = 0
-    var deltaX = 0f
     var page = 0
 
-    var offsetLeft = (startPageRight - startPageLeft) / 2 - maxWidthInPoints / 2
+    var mLastTouchX = 0f
+    var mLastTouchY = 0f
+    var mActivePointerId = 0
+    var mPosX = 0f
+    var mPosY = 0f
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            moveView(distanceX.reverseSign())
-            getData(distanceX)
+            moveView(distanceX.reverseSign().roundToInt())
+            getData(distanceX.roundToInt())
+
             return true
         }
     }
@@ -63,32 +76,33 @@ class CustomView : View {
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
-        maxWidthInPoints = defaultWidth.toFloat()
-        maxHeightInPoints = defaultHeight.toFloat()
+        maxWidthInPoints = defaultWidth
+        maxHeightInPoints = defaultHeight
+        currentItemCount = maxWidthInPoints * 3
     }
 
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        viewWidthInPixels = width.toFloat()
-        viewHeightInPixels = height.toFloat()
+        viewWidthInPixels = width
+        viewHeightInPixels = height
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         pixelSeries.forEach {
-            canvas.drawText(it.text.toString(), it.x, it.y, paint)
-            canvas.drawCircle(it.x, it.y, 5f, paint)
+            canvas.drawText(it.text.toString(), it.x.toFloat(), it.y.toFloat(), paint)
+            canvas.drawCircle(it.x.toFloat(), it.y.toFloat(), 5f, paint)
         }
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         scrollDetector.onTouchEvent(event)
         scaleDetector.onTouchEvent(event)
         return true
     }
 
-    fun moveView(distanceX: Float) {
+    fun moveView(distanceX: Int) {
         pixelSeries = pixelSeries.map {
             PointD(it.x.translate(distanceX), it.y, it.text)
         }
@@ -102,42 +116,47 @@ class CustomView : View {
         invalidate()
     }
 
-    fun getData(distanceX: Float) {
+    fun getData(distanceX: Int) {
         currentScroll = currentScroll + distanceX
-        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
-        if (page != deltaX.toInt()) {
-            page = deltaX.toInt()
-        } else {
-            return
+        if (currentScroll > viewWidthInPixels) {
+            Timber.d("$currentScroll")
         }
-
-        if (page.rem(4) == 0) {
-            if (startPageLeft + page != sliceLeft && sliceRight != startPageRight + page) {
-                sliceLeft = startPageLeft + page
-                sliceRight = startPageRight + page
-                currentSeries = series.subList(sliceLeft, sliceRight).toMutableList()
-                pixelSeries = currentSeries.map {
-                    PointD(
-                        getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels).translate(-1 * currentScroll),
-                        getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
-                        it.x
-                    )
-                }
-                Timber.d("$viewWidthInPixels, $viewHeightInPixels")
-                Timber.d("$pixelSeries")
-                invalidate()
-            }
-        }
+        //visible10
+        //all30
+        val currentScrollInPoints = getCalculatedX(currentScroll, viewWidthInPixels, maxWidthInPoints)
+//        Timber.d(currentScrollInPoints.toString())
+//        if (page != deltaX.toInt()) {
+//            page = deltaX.toInt()
+//        } else {
+//            return
+//        }
+//
+//        if (page.rem(4) == 0) {
+//            if (startPageLeft + page != sliceLeft && sliceRight != startPageLeft + currentItemCount + page) {
+//                sliceLeft = startPageLeft + page
+//                sliceRight = startPageLeft + currentItemCount + page
+//                currentSeries = series.subList(sliceLeft, sliceRight).toMutableList()
+//                pixelSeries = currentSeries.map {
+//                    PointD(
+//                        getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels).translate(-1 * currentScroll),
+//                        getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
+//                        it.x
+//                    )
+//                }
+//                invalidate()
+//            }
+//        }
     }
 
     //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedX(oldX: Float, oldWidth: Float, newWidth: Float): Float {
-        return oldX / oldWidth * newWidth
+    fun getCalculatedX(oldX: Int, oldWidth: Int, newWidth: Int): Int {
+//        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
+        return (oldX.toFloat() / oldWidth * newWidth).roundToInt()
     }
 
     //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedY(oldY: Float, oldHight: Float, newHight: Float): Float {
-        return newHight - oldY / oldHight * newHight
+    fun getCalculatedY(oldY: Int, oldHight: Int, newHight: Int): Int {
+        return (newHight - oldY.toFloat() / oldHight * newHight).roundToInt()
     }
 
     interface NewDataListener {
@@ -147,12 +166,10 @@ class CustomView : View {
     fun setData(data: List<PointM>) {
         if (series.isEmpty()) {
             series = data
-            //todo set data properly
-//            startPageLeft =
-            currentSeries = series.subList(startPageLeft, startPageRight)
-            currentScroll = currentScroll + getCalculatedX(startPageLeft.toFloat() + offsetLeft,  maxWidthInPoints, viewWidthInPixels)
+            currentSeries = series.subList(30, 60)
+            currentScroll = currentScroll + getCalculatedX(40,  maxWidthInPoints, viewWidthInPixels)
         } else {
-
+            TODO("not implemented when there is some data")
         }
         pixelSeries = currentSeries.map {
             PointD(
@@ -167,14 +184,14 @@ class CustomView : View {
 
 private fun Float.reverseSign(): Float = -this
 
-private fun Float.translate(distance: Float) = this + distance
+private fun Int.translate(distance: Int) = this + distance
 
-private fun PointD.scale(scaleFactor: Float, centerX: Float, centerY: Float): PointD {
+private fun PointD.scale(scaleFactor: Float, centerX: Int, centerY: Int): PointD {
     val tX = this.x - centerX
     val tY = this.y - centerY
     val sX = scaleFactor * tX
     val sY = scaleFactor * tY
     val nX = sX + centerX
     val nY = sY + centerY
-    return PointD(nX, nY, this.text)
+    return PointD(nX.roundToInt(), nY.roundToInt(), this.text)
 }

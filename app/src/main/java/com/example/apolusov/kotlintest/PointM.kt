@@ -1,8 +1,8 @@
 package com.example.apolusov.kotlintest
 
 data class PointM(
-    val x: Float,
-    val y: Float
+    val x: Int,
+    val y: Int
 ) {
     override fun toString() = "[$x, $y]"
 }

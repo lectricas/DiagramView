@@ -6,14 +6,26 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity">
 
-    <FrameLayout
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+    <!--<FrameLayout-->
+            <!--android:id="@+id/container"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"/>-->
 
     <!--<com.example.apolusov.kotlintest.SmoothLineChart-->
             <!--android:id="@+id/smoothChart"-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent"/>-->
+
+    <!--<com.example.apolusov.kotlintest.WorksheetView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"/>-->
+
+    <com.example.apolusov.kotlintest.withadapter.PinchRecyclerView
+            android:id="@+id/diagramRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+    </com.example.apolusov.kotlintest.withadapter.PinchRecyclerView>
+
 
 </android.support.constraint.ConstraintLayout>
