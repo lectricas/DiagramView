@@ -12,13 +12,15 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val customView = CustomView(this, this)
+        val customView = CustomView(this, this, 10, 10)
         container.addView(customView)
-        customView.setData((0..100).map { PointD(it.toFloat(), 5f) })
+        customView.post {
+            customView.setData((0..100).map { PointM(it.toFloat(), 5f) })
+        }
     }
 
 
-    override fun onNewData(point: PointD) {
+    override fun onNewData(point: PointM) {
 
     }
 }
