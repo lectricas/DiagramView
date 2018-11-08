@@ -10,9 +10,11 @@ import com.example.apolusov.kotlintest.R
 
 class DiagramAdapter : RecyclerView.Adapter<DiagramAdapter.ViewHolder>() {
 
-    var data = (0..9).map { dayCount ->
-        DayData((0..20).map { PointD(it, 5, it) })
-    }
+//    var data = (0..9).map { dayCount ->
+//        DayData((0..20).map { PointD(it.t, 5, it) })
+//    }
+
+    var data = mutableListOf<DayData>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         DiagramAdapter.ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_day, parent, false))

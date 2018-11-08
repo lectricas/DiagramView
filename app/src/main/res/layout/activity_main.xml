@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         tools:context=".MainActivity">
 
-    <!--<FrameLayout-->
-            <!--android:id="@+id/container"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"/>-->
-
-    <android.support.v7.widget.RecyclerView
-            android:id="@+id/diagramRecyclerView"
+    <FrameLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"/>
 
-    </android.support.v7.widget.RecyclerView>
+    <!--<android.support.v7.widget.RecyclerView-->
+            <!--android:visibility="visible"-->
+            <!--android:id="@+id/diagramRecyclerView"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent" />-->
+
+
+    <!--<com.example.apolusov.kotlintest.withadapter.GraphicView-->
+            <!--android:background="@android:color/darker_gray"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="0dp"/>-->
 
     <!--<com.example.apolusov.kotlintest.SmoothLineChart-->
             <!--android:id="@+id/smoothChart"-->
@@ -27,12 +33,12 @@
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent"/>-->
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>
 <!--<com.example.apolusov.kotlintest.sample.InteractiveLineGraphView-->
         <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
         <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
         <!--android:id="@+id/chart"-->
-        <!--android:padding="@dimen/chart_padding"-->
+        <!--android:padding="10dp"-->
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="match_parent"-->
         <!--app:labelSeparation="10dp"-->

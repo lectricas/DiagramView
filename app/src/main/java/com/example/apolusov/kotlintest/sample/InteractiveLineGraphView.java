@@ -20,6 +20,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.EdgeEffect;
 import android.widget.OverScroller;
 import com.example.apolusov.kotlintest.R;
 
@@ -59,7 +60,7 @@ public class InteractiveLineGraphView extends View {
     /**
      * The number of individual points (samples) in the chart series to draw onscreen.
      */
-    private static final int DRAW_STEPS = 30;
+    private static final int DRAW_STEPS = 3000;
 
     /**
      * Initial fling velocity for pan operations, in screen widths (or heights) per second.
@@ -133,10 +134,10 @@ public class InteractiveLineGraphView extends View {
     private RectF mScrollerStartViewport = new RectF(); // Used only for zooms and flings.
 
     // Edge effect / overscroll tracking objects.
-    private EdgeEffectCompat mEdgeEffectTop;
-    private EdgeEffectCompat mEdgeEffectBottom;
-    private EdgeEffectCompat mEdgeEffectLeft;
-    private EdgeEffectCompat mEdgeEffectRight;
+    private EdgeEffect mEdgeEffectTop;
+    private EdgeEffect mEdgeEffectBottom;
+    private EdgeEffect mEdgeEffectLeft;
+    private EdgeEffect mEdgeEffectRight;
 
     private boolean mEdgeEffectTopActive;
     private boolean mEdgeEffectBottomActive;
@@ -216,10 +217,10 @@ public class InteractiveLineGraphView extends View {
         mZoomer = new Zoomer(context);
 
         // Sets up edge effects
-        mEdgeEffectLeft = new EdgeEffectCompat(context);
-        mEdgeEffectTop = new EdgeEffectCompat(context);
-        mEdgeEffectRight = new EdgeEffectCompat(context);
-        mEdgeEffectBottom = new EdgeEffectCompat(context);
+        mEdgeEffectLeft = new EdgeEffect(context);
+        mEdgeEffectTop = new EdgeEffect(context);
+        mEdgeEffectRight = new EdgeEffect(context);
+        mEdgeEffectBottom = new EdgeEffect(context);
     }
 
     /**

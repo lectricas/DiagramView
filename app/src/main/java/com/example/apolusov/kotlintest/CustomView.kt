@@ -19,42 +19,30 @@ class CustomView : View {
         const val INITIAL_SCROLL = 0
     }
 
-    var currentScroll = INITIAL_SCROLL
-
     private var series = listOf<PointM>()
     private var currentSeries = listOf<PointM>()
     private var pixelSeries = listOf<PointD>()
     private var maxWidthInPoints = 0
     private var maxHeightInPoints = 0
-    private var viewWidthInPixels = 0
-    private var viewHeightInPixels = 0
+    private var viewWidthInPixels = 0f
+    private var viewHeightInPixels = 0f
 
     val paint = Paint().apply {
         color = Color.BLACK
         textSize = 30f
     }
 
-    var initialScroll = 0
+    private var currentScroll = 0f
+
     //what this variable Do???
-    var currentItemCount = 0
-
-    var startPageLeft = 0
-    var sliceLeft = 0
-    var sliceRight = 0
-    var page = 0
-
-    var mLastTouchX = 0f
-    var mLastTouchY = 0f
-    var mActivePointerId = 0
-    var mPosX = 0f
-    var mPosY = 0f
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            currentScroll = currentScroll + distanceX.toInt()
-            if (currentScroll < initialScroll) {
-                moveView(distanceX.reverseSign().roundToInt())
-                getData(distanceX.roundToInt())
+            Timber.d(distanceX.toString())
+            if (distanceX > 0) {
+                getRightContent(distanceX)
+            } else {
+                getLeftContent(distanceX)
             }
             return true
         }
@@ -67,22 +55,22 @@ class CustomView : View {
         }
     }
 
-    constructor(context: Context, newDataListener: NewDataListener, defaultWidth: Int, defaultHeight: Int) : super(context) {
+    constructor(context: Context, newDataListener: NewDataListener, defaultWidth: Int, defaultHeight: Int) : super(
+        context
+    ) {
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
         maxWidthInPoints = defaultWidth
         maxHeightInPoints = defaultHeight
-        currentItemCount = maxWidthInPoints * 3
-        Timber.d("constructor")
     }
 
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        viewWidthInPixels = width
-        viewHeightInPixels = height
+        viewWidthInPixels = width.toFloat()
+        viewHeightInPixels = height.toFloat()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -99,25 +87,55 @@ class CustomView : View {
         return true
     }
 
-    fun moveView(distanceX: Int) {
+    fun getLeftContent(distanceX: Float) {
+        val leftPointX = pixelSeries[0].x
+        val toScroll: Float
+        if (leftPointX > distanceX) {
+            toScroll = leftPointX
+        } else {
+            toScroll = distanceX
+        }
+
         pixelSeries = pixelSeries.map {
-            PointD(it.x.translate(distanceX), it.y, it.text)
+            PointD(it.x.translate(toScroll), it.y, it.text)
+        }
+        currentScroll += toScroll
+        Timber.d("currentScroll = $currentScroll first $leftPointX")
+        invalidate()
+    }
+
+    fun getRightContent(distanceX: Float) {
+        val rightPointX = pixelSeries.last().x
+        val toScroll: Float
+        if (distanceX > rightPointX - viewWidthInPixels) {
+            toScroll = rightPointX - viewWidthInPixels
+        } else {
+            toScroll = distanceX
+        }
+        pixelSeries = pixelSeries.map {
+            PointD(it.x.translate(toScroll), it.y, it.text)
+        }
+        currentScroll += toScroll
+        if (currentScroll.roundToInt() == rightPointX.roundToInt()) {
+            val startItem = pixelSeries.size - maxWidthInPoints
+//            pixelSeries = series.subList()
         }
         invalidate()
     }
 
+
     fun scaleView(factor: Float) {
-        pixelSeries = pixelSeries.map {
-            it.scale(factor, viewWidthInPixels / 2, viewHeightInPixels / 2)
-        }
-        invalidate()
+//        pixelSeries = pixelSeries.map {
+//            it.scale(factor, viewWidthInPixels / 2, viewHeightInPixels / 2)
+//        }
+//        invalidate()
     }
 
     fun getData(distanceX: Int) {
-        currentScroll = currentScroll + distanceX
+//        currentScroll = currentScroll + distanceX
         //visible10
         //all30
-        val currentScrollInPoints = getCalculatedX(currentScroll, viewWidthInPixels, maxWidthInPoints)
+//        val currentScrollInPoints = getCalculatedX(currentScroll, viewWidthInPixels, maxWidthInPoints)
 //        Timber.d(currentScrollInPoints.toString())
 //        if (page != deltaX.toInt()) {
 //            page = deltaX.toInt()
@@ -143,14 +161,14 @@ class CustomView : View {
     }
 
     //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedX(oldX: Int, oldWidth: Int, newWidth: Int): Int {
+    fun getCalculatedX(oldX: Float, oldWidth: Float, newWidth: Float): Float {
 //        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
-        return (oldX.toFloat() / oldWidth * newWidth).roundToInt()
+        return oldX / oldWidth * newWidth
     }
 
     //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedY(oldY: Int, oldHight: Int, newHight: Int): Int {
-        return (newHight - oldY.toFloat() / oldHight * newHight).roundToInt()
+    fun getCalculatedY(oldY: Float, oldHight: Float, newHight: Float): Float {
+        return newHight - oldY / oldHight * newHight
     }
 
     interface NewDataListener {
@@ -160,16 +178,14 @@ class CustomView : View {
     fun setData(data: List<PointM>) {
         if (series.isEmpty()) {
             series = data
-            currentSeries = series.subList(90, 100)
-            initialScroll =  getCalculatedX(90,  maxWidthInPoints, viewWidthInPixels)
-            currentScroll = initialScroll
+            currentSeries = series.subList(0, 20)
         } else {
             TODO("not implemented when there is some data")
         }
         pixelSeries = currentSeries.map {
             PointD(
-                getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels) - initialScroll,
-                getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
+                getCalculatedX(it.x.toFloat(), maxWidthInPoints.toFloat(), viewWidthInPixels),
+                getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
                 it.x
             )
         }
@@ -177,9 +193,7 @@ class CustomView : View {
     }
 }
 
-private fun Float.reverseSign(): Float = -this
-
-private fun Int.translate(distance: Int) = this + distance
+private fun Float.translate(distance: Float) = this - distance
 
 private fun PointD.scale(scaleFactor: Float, centerX: Int, centerY: Int): PointD {
     val tX = this.x - centerX
@@ -188,5 +202,5 @@ private fun PointD.scale(scaleFactor: Float, centerX: Int, centerY: Int): PointD
     val sY = scaleFactor * tY
     val nX = sX + centerX
     val nY = sY + centerY
-    return PointD(nX.roundToInt(), nY.roundToInt(), this.text)
+    return PointD(nX, nY, this.text)
 }

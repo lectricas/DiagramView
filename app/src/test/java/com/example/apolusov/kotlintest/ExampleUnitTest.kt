@@ -11,9 +11,8 @@ import java.util.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        val f1 = 7532
-        val f2 = 1024
-        print(f1.toFloat()/f2)
+        Math.abs(-5)
+        print(Math.abs(5))
     }
 
     fun getCalculatedY(oldY: Int, oldHight: Int, newHight: Int): Float {
