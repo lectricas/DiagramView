@@ -11,19 +11,9 @@ import java.util.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        val r = Random()
-        val a = (0..1000000).map { PointM(it, r.nextInt()) }
-        var x = Int.MAX_VALUE
-        val timeStart = System.nanoTime()
-        a.forEach {
-            if (it.y < x) {
-                x = it.y
-            }
-        }
-        val timeEnd = System.nanoTime()
-        println(timeEnd - timeStart)
-        println(x)
-//        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
+        val f1 = 7532
+        val f2 = 1024
+        print(f1.toFloat()/f2)
     }
 
     fun getCalculatedY(oldY: Int, oldHight: Int, newHight: Int): Float {

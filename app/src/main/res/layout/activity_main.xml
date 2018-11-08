@@ -11,6 +11,13 @@
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent"/>-->
 
+    <android.support.v7.widget.RecyclerView
+            android:id="@+id/diagramRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+    </android.support.v7.widget.RecyclerView>
+
     <!--<com.example.apolusov.kotlintest.SmoothLineChart-->
             <!--android:id="@+id/smoothChart"-->
             <!--android:layout_width="match_parent"-->
@@ -20,12 +27,20 @@
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent"/>-->
 
-    <com.example.apolusov.kotlintest.withadapter.PinchRecyclerView
-            android:id="@+id/diagramRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-    </com.example.apolusov.kotlintest.withadapter.PinchRecyclerView>
-
-
 </android.support.constraint.ConstraintLayout>
+<!--<com.example.apolusov.kotlintest.sample.InteractiveLineGraphView-->
+        <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
+        <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
+        <!--android:id="@+id/chart"-->
+        <!--android:padding="@dimen/chart_padding"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--app:labelSeparation="10dp"-->
+        <!--app:labelTextSize="14sp"-->
+        <!--app:labelTextColor="#d000"-->
+        <!--app:axisThickness="2dp"-->
+        <!--app:axisColor="#d000"-->
+        <!--app:gridThickness="1dp"-->
+        <!--app:gridColor="#2000"-->
+        <!--app:dataColor="#a6c"-->
+        <!--app:dataThickness="8dp"/>-->

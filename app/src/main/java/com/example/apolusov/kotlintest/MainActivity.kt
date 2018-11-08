@@ -18,7 +18,6 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
             adapter = DiagramAdapter()
         }
 
-
 //        val customView = CustomView(this, this, 10, 10)
 //        container.addView(customView)
 //        customView.post {

@@ -1,17 +1,10 @@
 package com.example.apolusov.kotlintest
 
-import android.animation.Animator
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.support.v4.view.MotionEventCompat
 import android.view.*
-import android.view.MotionEvent.INVALID_POINTER_ID
-import android.view.animation.AccelerateInterpolator
-import android.view.animation.DecelerateInterpolator
-import android.widget.OverScroller
 import timber.log.Timber
 import kotlin.math.roundToInt
 
@@ -41,6 +34,7 @@ class CustomView : View {
         textSize = 30f
     }
 
+    var initialScroll = 0
     //what this variable Do???
     var currentItemCount = 0
 
@@ -57,9 +51,11 @@ class CustomView : View {
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            moveView(distanceX.reverseSign().roundToInt())
-            getData(distanceX.roundToInt())
-
+            currentScroll = currentScroll + distanceX.toInt()
+            if (currentScroll < initialScroll) {
+                moveView(distanceX.reverseSign().roundToInt())
+                getData(distanceX.roundToInt())
+            }
             return true
         }
     }
@@ -79,6 +75,7 @@ class CustomView : View {
         maxWidthInPoints = defaultWidth
         maxHeightInPoints = defaultHeight
         currentItemCount = maxWidthInPoints * 3
+        Timber.d("constructor")
     }
 
 
@@ -118,9 +115,6 @@ class CustomView : View {
 
     fun getData(distanceX: Int) {
         currentScroll = currentScroll + distanceX
-        if (currentScroll > viewWidthInPixels) {
-            Timber.d("$currentScroll")
-        }
         //visible10
         //all30
         val currentScrollInPoints = getCalculatedX(currentScroll, viewWidthInPixels, maxWidthInPoints)
@@ -166,14 +160,15 @@ class CustomView : View {
     fun setData(data: List<PointM>) {
         if (series.isEmpty()) {
             series = data
-            currentSeries = series.subList(30, 60)
-            currentScroll = currentScroll + getCalculatedX(40,  maxWidthInPoints, viewWidthInPixels)
+            currentSeries = series.subList(90, 100)
+            initialScroll =  getCalculatedX(90,  maxWidthInPoints, viewWidthInPixels)
+            currentScroll = initialScroll
         } else {
             TODO("not implemented when there is some data")
         }
         pixelSeries = currentSeries.map {
             PointD(
-                getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels) - currentScroll,
+                getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels) - initialScroll,
                 getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
                 it.x
             )
