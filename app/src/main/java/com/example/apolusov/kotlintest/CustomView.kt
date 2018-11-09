@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.view.*
 import timber.log.Timber
-import kotlin.math.roundToInt
 
 
 class CustomView : View {
@@ -38,7 +37,6 @@ class CustomView : View {
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            Timber.d(distanceX.toString())
             if (distanceX > 0) {
                 getRightContent(distanceX)
             } else {
@@ -100,15 +98,27 @@ class CustomView : View {
             PointD(it.x.translate(toScroll), it.y, it.text)
         }
         currentScroll += toScroll
-        Timber.d("currentScroll = $currentScroll first $leftPointX")
+//        Timber.d("currentScroll = $currentScroll first $leftPointX")
         invalidate()
     }
 
     fun getRightContent(distanceX: Float) {
-        val rightPointX = pixelSeries.last().x
+        val pointToLoad = pixelSeries[pixelSeries.size - maxWidthInPoints].x
         val toScroll: Float
-        if (distanceX > rightPointX - viewWidthInPixels) {
-            toScroll = rightPointX - viewWidthInPixels
+        if (distanceX > pointToLoad - viewWidthInPixels) {
+            toScroll = pointToLoad - viewWidthInPixels
+            val startItem = pixelSeries.last().text + 1
+            val shift = startItem - 20
+            pixelSeries = pixelSeries.takeLast(30).plus(
+                series.subList(startItem, startItem + 30)
+                    .map {
+                        PointD(
+                            getCalculatedX(it.x.toFloat() - shift, maxWidthInPoints.toFloat(), viewWidthInPixels) + toScroll,
+                            getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
+                            it.x
+                        )
+                    }
+            )
         } else {
             toScroll = distanceX
         }
@@ -116,10 +126,7 @@ class CustomView : View {
             PointD(it.x.translate(toScroll), it.y, it.text)
         }
         currentScroll += toScroll
-        if (currentScroll.roundToInt() == rightPointX.roundToInt()) {
-            val startItem = pixelSeries.size - maxWidthInPoints
-//            pixelSeries = series.subList()
-        }
+//        Timber.d("$currentScroll, $rightPointX")
         invalidate()
     }
 
@@ -178,7 +185,7 @@ class CustomView : View {
     fun setData(data: List<PointM>) {
         if (series.isEmpty()) {
             series = data
-            currentSeries = series.subList(0, 20)
+            currentSeries = series.subList(0, 30)
         } else {
             TODO("not implemented when there is some data")
         }

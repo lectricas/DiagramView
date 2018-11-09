@@ -9,6 +9,7 @@ import android.view.ScaleGestureDetector
 import com.example.apolusov.kotlintest.withadapter.DiagramAdapter
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
     }
 
     private var scaleFactor = 1f
+    val r = Random()
 
     val diagramAdapter = DiagramAdapter()
 
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
         val customView = CustomView(this, this, 10, 10)
         container.addView(customView)
         customView.post {
-            customView.setData((0..100).map { PointM(it, 5) })
+            customView.setData((0..150).map { PointM(it, r.nextInt(2) + 4) })
         }
     }
 
