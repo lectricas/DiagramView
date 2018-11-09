@@ -2,10 +2,8 @@ package com.example.apolusov.kotlintest
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
+import com.example.apolusov.kotlintest.daydata.DiabetPoint
+import com.example.apolusov.kotlintest.daydata.DotColor
 import com.example.apolusov.kotlintest.withadapter.DiagramAdapter
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
@@ -45,10 +43,34 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
 //            })
 //        }
 
-        val customView = CustomView(this, this, 10, 10)
+        val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+        val days = (currentDay - 5..currentDay + 1).map { Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, it) } }
+
+        val diabetPoints = mutableListOf<DiabetPoint>()
+        days.forEach { calendar ->
+            (0..23).forEach { hour ->
+                val newCal = Calendar.getInstance()
+                newCal.timeInMillis = calendar.timeInMillis
+                newCal.set(Calendar.HOUR_OF_DAY, hour)
+                diabetPoints.add(DiabetPoint(newCal.timeInMillis, 500, DotColor.RED, newCal))
+            }
+        }
+
+        val now = Calendar.getInstance()
+        var positionToAdd = 0
+        diabetPoints.forEachIndexed { index, diabetPoint ->
+            if (now.timeInMillis > diabetPoint.time) {
+                positionToAdd = index
+            }
+        }
+        diabetPoints.add(positionToAdd + 1, DiabetPoint(now.timeInMillis, 600, DotColor.RED, now))
+
+        val width = 1000 * 60 * 60 * 5 //5 hours
+        val height = 1000
+        val customView = CustomView(this, this, width, height)
         container.addView(customView)
         customView.post {
-            customView.setData((0..150).map { PointM(it, r.nextInt(2) + 4) })
+            customView.setData(diabetPoints)
         }
     }
 

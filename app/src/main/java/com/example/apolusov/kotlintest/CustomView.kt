@@ -5,7 +5,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.view.*
+import com.example.apolusov.kotlintest.daydata.DiabetPoint
+import com.example.apolusov.kotlintest.daydata.GraphPixelPoint
 import timber.log.Timber
+import java.util.*
 
 
 class CustomView : View {
@@ -18,11 +21,10 @@ class CustomView : View {
         const val INITIAL_SCROLL = 0
     }
 
-    private var series = listOf<PointM>()
-    private var currentSeries = listOf<PointM>()
-    private var pixelSeries = listOf<PointD>()
-    private var maxWidthInPoints = 0
-    private var maxHeightInPoints = 0
+    private var series = listOf<DiabetPoint>()
+    private var pixelSeries = listOf<GraphPixelPoint>()
+    private var maxWidthInPoints = 0f
+    private var maxHeightInPoints = 0f
     private var viewWidthInPixels = 0f
     private var viewHeightInPixels = 0f
 
@@ -33,15 +35,16 @@ class CustomView : View {
 
     private var currentScroll = 0f
 
-    //what this variable Do???
-
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            if (distanceX > 0) {
-                getRightContent(distanceX)
-            } else {
-                getLeftContent(distanceX)
-            }
+//            if (canScroll()) {
+//                if (distanceX >= 0 && canGetRightContent(distanceX)) {
+//                    getRightContent(distanceX)
+//                } else if (distanceX < 0) {
+//                    getLeftContent(distanceX)
+//                }
+//            }
+            moveView(distanceX)
             return true
         }
     }
@@ -60,8 +63,8 @@ class CustomView : View {
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
-        maxWidthInPoints = defaultWidth
-        maxHeightInPoints = defaultHeight
+        maxWidthInPoints = defaultWidth.toFloat()
+        maxHeightInPoints = defaultHeight.toFloat()
     }
 
 
@@ -74,8 +77,8 @@ class CustomView : View {
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         pixelSeries.forEach {
-            canvas.drawText(it.text.toString(), it.x.toFloat(), it.y.toFloat(), paint)
-            canvas.drawCircle(it.x.toFloat(), it.y.toFloat(), 5f, paint)
+            canvas.drawText("${it.calendar.get(Calendar.DAY_OF_MONTH)}, ${it.calendar.get(Calendar.HOUR_OF_DAY)}", it.x, it.y, paint)
+            canvas.drawCircle(it.x, it.y, 10f, paint)
         }
     }
 
@@ -85,50 +88,83 @@ class CustomView : View {
         return true
     }
 
-    fun getLeftContent(distanceX: Float) {
-        val leftPointX = pixelSeries[0].x
-        val toScroll: Float
-        if (leftPointX > distanceX) {
-            toScroll = leftPointX
-        } else {
-            toScroll = distanceX
-        }
+//    fun canGetRightContent(distanceX: Float): Boolean {
+//        val canGetRightContent = pixelSeries.size > 29
+//        if (canGetRightContent) {
+//            return true
+//        } else {
+//            val stopPoint = pixelSeries.last().x
+//            val toScroll: Float
+//            if (distanceX > stopPoint - viewWidthInPixels) {
+//                toScroll = stopPoint - viewWidthInPixels
+//            } else {
+//                toScroll = distanceX
+//            }
+//            pixelSeries = pixelSeries.map {
+//                PointD(it.x.translate(toScroll), it.y, it.text)
+//            }
+//            currentScroll += toScroll
+//            invalidate()
+//            return false
+//        }
+//    }
+//
+//    fun getRightContent(distanceX: Float) {
+//        val pointToLoad = pixelSeries[pixelSeries.size - maxWidthInPoints].x
+//        val toScroll: Float
+//        if (distanceX > pointToLoad - viewWidthInPixels) {
+//            toScroll = pointToLoad - viewWidthInPixels
+//            val startItem = pixelSeries.last().text + 1
+//            val shift = startItem - 20
+//            pixelSeries = pixelSeries.takeLast(30).plus(
+//                series.subList(startItem, startItem + 30)
+//                    .map {
+//                        PointD(
+//                            getCalculatedX(it.x.toFloat() - shift, maxWidthInPoints.toFloat(), viewWidthInPixels) + toScroll,
+//                            getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
+//                            it.x
+//                        )
+//                    }
+//            )
+//        } else {
+//            toScroll = distanceX
+//        }
+//        pixelSeries = pixelSeries.map {
+//            PointD(it.x.translate(toScroll), it.y, it.text)
+//        }
+//        currentScroll += toScroll
+//        invalidate()
+//    }
+//
+//    fun getLeftContent(distanceX: Float) {
+//        val pointToLoad = pixelSeries[maxWidthInPoints].x
+//        val toScroll: Float
+//        if (Math.abs(pointToLoad) < Math.abs(distanceX)) {
+//            toScroll = pointToLoad
+//            val endItem = pixelSeries.first().text
+//            val shift = endItem + 10
+//            pixelSeries = series.subList(endItem - 30, endItem)
+//                .map {
+//                    PointD(
+//                        getCalculatedX(it.x.toFloat() - shift, maxWidthInPoints.toFloat(), viewWidthInPixels),
+//                        getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
+//                        it.x
+//                    )
+//                }.plus(pixelSeries.take(30))
+//
+//            Timber.d("$pixelSeries")
+//        } else {
+//            toScroll = distanceX
+//        }
+//
+//        pixelSeries = pixelSeries.map {
+//            PointD(it.x.translate(toScroll), it.y, it.text)
+//        }
+//        currentScroll += toScroll
+//        invalidate()
+//    }
 
-        pixelSeries = pixelSeries.map {
-            PointD(it.x.translate(toScroll), it.y, it.text)
-        }
-        currentScroll += toScroll
-//        Timber.d("currentScroll = $currentScroll first $leftPointX")
-        invalidate()
-    }
-
-    fun getRightContent(distanceX: Float) {
-        val pointToLoad = pixelSeries[pixelSeries.size - maxWidthInPoints].x
-        val toScroll: Float
-        if (distanceX > pointToLoad - viewWidthInPixels) {
-            toScroll = pointToLoad - viewWidthInPixels
-            val startItem = pixelSeries.last().text + 1
-            val shift = startItem - 20
-            pixelSeries = pixelSeries.takeLast(30).plus(
-                series.subList(startItem, startItem + 30)
-                    .map {
-                        PointD(
-                            getCalculatedX(it.x.toFloat() - shift, maxWidthInPoints.toFloat(), viewWidthInPixels) + toScroll,
-                            getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
-                            it.x
-                        )
-                    }
-            )
-        } else {
-            toScroll = distanceX
-        }
-        pixelSeries = pixelSeries.map {
-            PointD(it.x.translate(toScroll), it.y, it.text)
-        }
-        currentScroll += toScroll
-//        Timber.d("$currentScroll, $rightPointX")
-        invalidate()
-    }
+    fun canScroll() = pixelSeries.size > maxWidthInPoints
 
 
     fun scaleView(factor: Float) {
@@ -138,33 +174,11 @@ class CustomView : View {
 //        invalidate()
     }
 
-    fun getData(distanceX: Int) {
-//        currentScroll = currentScroll + distanceX
-        //visible10
-        //all30
-//        val currentScrollInPoints = getCalculatedX(currentScroll, viewWidthInPixels, maxWidthInPoints)
-//        Timber.d(currentScrollInPoints.toString())
-//        if (page != deltaX.toInt()) {
-//            page = deltaX.toInt()
-//        } else {
-//            return
-//        }
-//
-//        if (page.rem(4) == 0) {
-//            if (startPageLeft + page != sliceLeft && sliceRight != startPageLeft + currentItemCount + page) {
-//                sliceLeft = startPageLeft + page
-//                sliceRight = startPageLeft + currentItemCount + page
-//                currentSeries = series.subList(sliceLeft, sliceRight).toMutableList()
-//                pixelSeries = currentSeries.map {
-//                    PointD(
-//                        getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels).translate(-1 * currentScroll),
-//                        getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
-//                        it.x
-//                    )
-//                }
-//                invalidate()
-//            }
-//        }
+    fun moveView(distanceX: Float) {
+        pixelSeries = pixelSeries.map {
+                       GraphPixelPoint(it.x.translate(distanceX), it.y, it.substanceAmount, it.type, it.calendar)
+        }
+        invalidate()
     }
 
     //move from real world coordinates to the viewport and vice versa
@@ -182,21 +196,28 @@ class CustomView : View {
         fun onNewData(point: PointM)
     }
 
-    fun setData(data: List<PointM>) {
+    fun setData(data: List<DiabetPoint>) {
         if (series.isEmpty()) {
             series = data
-            currentSeries = series.subList(0, 30)
         } else {
             TODO("not implemented when there is some data")
         }
-        pixelSeries = currentSeries.map {
-            PointD(
-                getCalculatedX(it.x.toFloat(), maxWidthInPoints.toFloat(), viewWidthInPixels),
-                getCalculatedY(it.y.toFloat(), maxHeightInPoints.toFloat(), viewHeightInPixels),
-                it.x
+        val seriesToTake = series.takeLast(100)
+        val shift = seriesToTake.first().time.toFloat() + shiftToPage(18)
+        pixelSeries = seriesToTake.map {
+            GraphPixelPoint(
+                getCalculatedX(it.time.toFloat().translate(shift), maxWidthInPoints, viewWidthInPixels),
+                getCalculatedY(it.substanceAmount.toFloat(), maxHeightInPoints, viewHeightInPixels),
+                it.substanceAmount,
+                it.type,
+                it.calendar
             )
         }
         invalidate()
+    }
+
+    private fun shiftToPage(page: Int): Float {
+        return page * maxWidthInPoints
     }
 }
 
