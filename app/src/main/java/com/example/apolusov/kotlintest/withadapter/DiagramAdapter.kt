@@ -6,27 +6,44 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.apolusov.kotlintest.PointD
 import com.example.apolusov.kotlintest.R
+import timber.log.Timber
 
 
-class DiagramAdapter : RecyclerView.Adapter<DiagramAdapter.ViewHolder>() {
+class DiagramAdapter : RecyclerView.Adapter<DiagramAdapter.DiagramViewHolder>() {
 
-//    var data = (0..9).map { dayCount ->
-//        DayData((0..20).map { PointD(it.t, 5, it) })
-//    }
+    lateinit var recyclerView: CustomRecyclerView
 
-    var data = mutableListOf<DayData>()
+    var data = (0..10).map { dayCount ->
+        DayData((0..20).map { PointD(it.toFloat(), 5f, it) })
+    }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-        DiagramAdapter.ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_day, parent, false))
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bindItems(data[position])
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DiagramViewHolder {
+        Timber.d("createViewHolder $viewType")
+        return DiagramAdapter.DiagramViewHolder(
+            LayoutInflater.from(parent.context).inflate(
+                R.layout.item_day,
+                parent,
+                false
+            )
+        )
     }
 
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bindItems(day: DayData) {
+    override fun onBindViewHolder(holder: DiagramViewHolder, position: Int) {
+        holder.bindItems(data[position], recyclerView.viewWidth, recyclerView.customDigit, position)
+    }
 
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView = recyclerView as CustomRecyclerView
+    }
+
+    class DiagramViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bindItems(day: DayData, viewWidth: Int, customDigit: Int, position: Int) {
+            Timber.d("$position bind")
+            (itemView as GraphicView).position = position
+            itemView.digit = customDigit
+            itemView.requestLayout()
         }
     }
 

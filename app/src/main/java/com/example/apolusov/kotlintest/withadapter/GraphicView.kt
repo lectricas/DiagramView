@@ -5,11 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
-import com.example.apolusov.kotlintest.MainActivity.Companion.VIEW_WIDTH
-import com.example.apolusov.kotlintest.MainActivity.Companion.ZOOM
 import com.example.apolusov.kotlintest.PointD
 import com.example.apolusov.kotlintest.PointM
 import timber.log.Timber
@@ -19,6 +15,9 @@ class GraphicView : View {
 
     private var viewWidthInPixels = 0
     private var viewHeightInPixels = 0
+
+    var digit = 0
+    var position = 0
 //    private var scaleDetector: ScaleGestureDetector
 
 //    private var scaleFactor = 1f
@@ -27,7 +26,7 @@ class GraphicView : View {
 
     val paint = Paint().apply {
         color = Color.BLACK
-        textSize = 10f
+        textSize = 50f
     }
 
 //    private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -45,11 +44,6 @@ class GraphicView : View {
     }
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
 //        scaleDetector = ScaleGestureDetector(context, scaleListener)
-
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        setMeasuredDimension(VIEW_WIDTH.toInt(), 1000)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -75,13 +69,15 @@ class GraphicView : View {
     }
 
     override fun onDraw(canvas: Canvas) {
-        (0..1000).forEach { y ->
-            (0..1000).forEach { x ->
-                if (x.rem(100) == 0 && y.rem(100) == 0) {
-                    canvas.drawText("$x, $y", x.toFloat(), y.toFloat(), paint)
-                }
-            }
-        }
+        canvas.drawText("$digit", 100f, 200f, paint)
+        canvas.drawText("$position", 300f, 300f, paint)
+//        (0..1000).forEach { y ->
+//            (0..1000).forEach { x ->
+//                if (x.rem(100) == 0 && y.rem(100) == 0) {
+//                    canvas.drawText("$x, $y", x.toFloat(), y.toFloat(), paint)
+//                }
+//            }
+//        }
     }
 }
 
