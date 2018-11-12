@@ -1,14 +1,11 @@
-package com.example.apolusov.kotlintest
+package com.example.apolusov.kotlintest.old
 
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.view.*
-import com.example.apolusov.kotlintest.daydata.DiabetPoint
-import com.example.apolusov.kotlintest.daydata.GraphPixelPoint
-import timber.log.Timber
-import java.util.*
+import com.example.apolusov.kotlintest.daydata.OneDayPoints
 
 
 class CustomView : View {
@@ -18,15 +15,16 @@ class CustomView : View {
     private var scaleDetector: ScaleGestureDetector
 
     companion object {
-        const val INITIAL_SCROLL = 0
+        const val WIDTH = 2672
+        const val HEIGHT = 1152
     }
 
-    private var series = listOf<DiabetPoint>()
-    private var pixelSeries = listOf<GraphPixelPoint>()
-    private var maxWidthInPoints = 0f
-    private var maxHeightInPoints = 0f
-    private var viewWidthInPixels = 0f
-    private var viewHeightInPixels = 0f
+    private var series = listOf<OneDayPoints>()
+    private var pixelSeries = listOf<OneDayPoints>()
+//    private var maxWidthInPoints = 0f
+//    private var maxHeightInPoints = 0f
+//    private var viewWidthInPixels = 0f
+//    private var viewHeightInPixels = 0f
 
     val paint = Paint().apply {
         color = Color.BLACK
@@ -51,7 +49,7 @@ class CustomView : View {
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            scaleView(detector.scaleFactor)
+//            scaleView(detector.scaleFactor)
             return true
         }
     }
@@ -63,23 +61,17 @@ class CustomView : View {
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
-        maxWidthInPoints = defaultWidth.toFloat()
-        maxHeightInPoints = defaultHeight.toFloat()
+//        maxWidthInPoints = defaultWidth.toFloat()
+//        maxHeightInPoints = defaultHeight.toFloat()
     }
 
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        viewWidthInPixels = width.toFloat()
-        viewHeightInPixels = height.toFloat()
-    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        pixelSeries.forEach {
-            canvas.drawText("${it.calendar.get(Calendar.DAY_OF_MONTH)}, ${it.calendar.get(Calendar.HOUR_OF_DAY)}", it.x, it.y, paint)
-            canvas.drawCircle(it.x, it.y, 10f, paint)
-        }
+//        pixelSeries.forEach {
+//            canvas.drawText("${it.calendar.get(Calendar.DAY_OF_MONTH)}, ${it.calendar.get(Calendar.HOUR_OF_DAY)}", it.x, it.y, paint)
+//            canvas.drawCircle(it.x, it.y, 10f, paint)
+//        }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -87,6 +79,56 @@ class CustomView : View {
         scaleDetector.onTouchEvent(event)
         return true
     }
+
+    fun moveView(distanceX: Float) {
+//        pixelSeries = pixelSeries.map {
+//                       GraphPixelPoint(it.x.translate(distanceX), it.y, it.substanceAmount, it.type, it.calendar)
+//        }
+//        invalidate()
+    }
+
+    //move from real world coordinates to the viewport and vice versa
+    fun getCalculatedX(oldX: Float, oldWidth: Float, newWidth: Float): Float {
+//        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
+        return oldX / oldWidth * newWidth
+    }
+
+    //move from real world coordinates to the viewport and vice versa
+    fun getCalculatedY(oldY: Float, oldHight: Float, newHight: Float): Float {
+        return newHight - oldY / oldHight * newHight
+    }
+
+    interface NewDataListener {
+        fun onNewData(point: PointM)
+    }
+
+//    fun setData(data: List<OneDayPoints>) {
+//        val newData = listOf<OneDayPoints>()
+//        data.forEachIndexed { index, oneDayPoints ->
+//            OneDayPoints(oneDayPoints.dayBefore, oneDayPoints.currentDay, oneDayPoints.dayAfter, WIDTH * index, WIDTH * )
+//        }
+//        invalidate()
+//    }
+}
+//fun scaleView(factor: Float) {
+////        pixelSeries = pixelSeries.map {
+////            it.scale(factor, viewWidthInPixels / 2, viewHeightInPixels / 2)
+////        }
+////        invalidate()
+//}
+
+
+//private fun Float.translate(distance: Float) = this - distance
+//
+//private fun PointD.scale(scaleFactor: Float, centerX: Int, centerY: Int): PointD {
+//    val tX = this.x - centerX
+//    val tY = this.y - centerY
+//    val sX = scaleFactor * tX
+//    val sY = scaleFactor * tY
+//    val nX = sX + centerX
+//    val nY = sY + centerY
+//    return PointD(nX, nY, this.text)
+//}
 
 //    fun canGetRightContent(distanceX: Float): Boolean {
 //        val canGetRightContent = pixelSeries.size > 29
@@ -164,71 +206,4 @@ class CustomView : View {
 //        invalidate()
 //    }
 
-    fun canScroll() = pixelSeries.size > maxWidthInPoints
-
-
-    fun scaleView(factor: Float) {
-//        pixelSeries = pixelSeries.map {
-//            it.scale(factor, viewWidthInPixels / 2, viewHeightInPixels / 2)
-//        }
-//        invalidate()
-    }
-
-    fun moveView(distanceX: Float) {
-        pixelSeries = pixelSeries.map {
-                       GraphPixelPoint(it.x.translate(distanceX), it.y, it.substanceAmount, it.type, it.calendar)
-        }
-        invalidate()
-    }
-
-    //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedX(oldX: Float, oldWidth: Float, newWidth: Float): Float {
-//        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
-        return oldX / oldWidth * newWidth
-    }
-
-    //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedY(oldY: Float, oldHight: Float, newHight: Float): Float {
-        return newHight - oldY / oldHight * newHight
-    }
-
-    interface NewDataListener {
-        fun onNewData(point: PointM)
-    }
-
-    fun setData(data: List<DiabetPoint>) {
-        if (series.isEmpty()) {
-            series = data
-        } else {
-            TODO("not implemented when there is some data")
-        }
-        val seriesToTake = series.takeLast(100)
-        val shift = seriesToTake.first().time.toFloat() + shiftToPage(18)
-        pixelSeries = seriesToTake.map {
-            GraphPixelPoint(
-                getCalculatedX(it.time.toFloat().translate(shift), maxWidthInPoints, viewWidthInPixels),
-                getCalculatedY(it.substanceAmount.toFloat(), maxHeightInPoints, viewHeightInPixels),
-                it.substanceAmount,
-                it.type,
-                it.calendar
-            )
-        }
-        invalidate()
-    }
-
-    private fun shiftToPage(page: Int): Float {
-        return page * maxWidthInPoints
-    }
-}
-
-private fun Float.translate(distance: Float) = this - distance
-
-private fun PointD.scale(scaleFactor: Float, centerX: Int, centerY: Int): PointD {
-    val tX = this.x - centerX
-    val tY = this.y - centerY
-    val sX = scaleFactor * tX
-    val sY = scaleFactor * tY
-    val nX = sX + centerX
-    val nY = sY + centerY
-    return PointD(nX, nY, this.text)
-}
+//    fun canScroll() = pixelSeries.size > maxWidthInPoints

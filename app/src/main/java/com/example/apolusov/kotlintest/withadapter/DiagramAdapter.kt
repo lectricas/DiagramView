@@ -4,7 +4,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.apolusov.kotlintest.PointD
+import com.example.apolusov.kotlintest.old.PointD
 import com.example.apolusov.kotlintest.R
 import timber.log.Timber
 

@@ -6,9 +6,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
-import com.example.apolusov.kotlintest.PointD
-import com.example.apolusov.kotlintest.PointM
-import timber.log.Timber
+import com.example.apolusov.kotlintest.old.PointD
+import com.example.apolusov.kotlintest.old.PointM
 import kotlin.math.roundToInt
 
 class GraphicView : View {

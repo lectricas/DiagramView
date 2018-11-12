@@ -9,6 +9,6 @@ class DiabetPoint(
     val calendar: Calendar
 ) {
     override fun toString(): String {
-        return "[$time, $type, ${calendar.timeInMillis}, ${calendar.get(Calendar.HOUR_OF_DAY)}]"
+        return "[$time, $substanceAmount, $type, ${calendar.timeInMillis}, ${calendar.get(Calendar.HOUR_OF_DAY)}]"
     }
 }

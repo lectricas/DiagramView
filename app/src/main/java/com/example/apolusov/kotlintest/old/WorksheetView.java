@@ -1,4 +1,4 @@
-package com.example.apolusov.kotlintest;
+package com.example.apolusov.kotlintest.old;
 
 import android.content.Context;
 import android.graphics.Canvas;

@@ -1,4 +1,4 @@
-package com.example.apolusov.kotlintest
+package com.example.apolusov.kotlintest.old
 
 data class PointD(
     val x: Float,
