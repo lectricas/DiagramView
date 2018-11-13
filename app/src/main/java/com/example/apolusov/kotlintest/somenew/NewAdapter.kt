@@ -14,13 +14,12 @@ import timber.log.Timber
 
 class NewAdapter : RecyclerView.Adapter<NewAdapter.NewViewHolder>() {
 
-    lateinit var recyclerView: CustomRecyclerView
-
     var data = (0..10).map { dayCount ->
         "$dayCount + someString"
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NewViewHolder {
+        Timber.d("adapter onCreateViewHolder")
         return NewAdapter.NewViewHolder(
             LayoutInflater.from(parent.context).inflate(
                 R.layout.item_new,
@@ -30,8 +29,8 @@ class NewAdapter : RecyclerView.Adapter<NewAdapter.NewViewHolder>() {
         )
     }
 
-
     override fun onBindViewHolder(holder: NewViewHolder, position: Int) {
+        Timber.d("adapter onBindViewholder")
         holder.bindItems(data[position])
     }
 
