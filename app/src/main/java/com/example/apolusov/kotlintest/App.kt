@@ -1,4 +1,4 @@
-package com.example.apolusov.kotlintest.old
+package com.example.apolusov.kotlintest
 
 import android.app.Application
 import timber.log.Timber
