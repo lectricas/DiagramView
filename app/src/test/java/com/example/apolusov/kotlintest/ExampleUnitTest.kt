@@ -1,11 +1,6 @@
 package com.example.apolusov.kotlintest
 
-import com.example.apolusov.kotlintest.daydata.DiabetPoint
-import com.example.apolusov.kotlintest.daydata.DotColor
-import com.example.apolusov.kotlintest.daydata.OneDayPoints
 import org.junit.Test
-import timber.log.Timber
-import java.util.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -35,7 +30,9 @@ class ExampleUnitTest {
 
 
 //        val dayToLoad = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
-        (0..5).forEach { print(it) }
+        for (i in 1 downTo 1) {
+            println(i)
+        }
 
 //        print(days)
 //        val now = Calendar.getInstance()
