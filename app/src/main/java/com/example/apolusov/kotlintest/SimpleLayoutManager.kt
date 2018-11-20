@@ -14,60 +14,32 @@ class SimpleLayoutManager(c: Context) : RecyclerView.LayoutManager() {
     private var mFirstPosition: Int = 0
     private val mScrollDistance: Int
 
-    private var scrolledOffset = 0
+    private var globalLeft = 0
+    private var globalRight = 0
 
     init {
         val dm = c.resources.displayMetrics
         mScrollDistance = (SCROLL_DISTANCE * dm.density + 0.5f).toInt()
     }
+    var offset = 0
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
-//        Timber.d("onLayoutChildren")
-//        var oldRight = width - paddingRight
-//        val oldRightView = if (childCount > 0) getChildAt(0) else null
-//        if (oldRightView != null) {
-//            oldRight = oldRightView.right
-//        }
-//
-//        val count = state.itemCount
-//
-//        val parentLeft = paddingLeft
-//        val top = paddingTop
-//        val bottom = height - paddingBottom
-//        var left: Int
-//        var right = oldRight
-//
-//        detachAndScrapAttachedViews(recycler)
-//        var i = 0
-//        while (mFirstPosition + i < count && right > parentLeft) {
-//            Timber.d("children ${mFirstPosition + i}")
-//            val v = recycler.getViewForPosition(mFirstPosition + i)
-//            addView(v, i)
-//            measureChildWithMargins(v, 0, 0)
-//            left = right - getDecoratedMeasuredWidth(v)
-//            layoutDecorated(v, left, top, right, bottom)
-//            i++
-//            right = left
-//        }
         val count = state.itemCount
-        val parentLeft = 0
         val top = 0
         val bottom = height
-        val rightTemp = width
-        var leftTemp = 0
-        val centerX = width / 2
+        if (globalRight ==0) {
+            globalRight = width
+        }
+
         detachAndScrapAttachedViews(recycler)
         var i = 0
-
-        val v = recycler.getViewForPosition(mFirstPosition + i)
-        addView(v, i)
-        measureChildWithMargins(v, 0, 0)
-        leftTemp = rightTemp - getDecoratedMeasuredWidth(v)
-        val viewCenter = rightTemp - getDecoratedMeasuredWidth(v) / 2
-        val shift = centerX - viewCenter
-        val left = leftTemp + shift
-        val right = rightTemp + shift
-        layoutDecorated(v, left, top, right, bottom)
+        while(mFirstPosition + i < count && globalRight > 0) {
+            val v = recycler.getViewForPosition(mFirstPosition + i)
+            addView(v, i)
+            measureChildWithMargins(v, 0, 0)
+            layoutDecorated(v, globalLeft, top, globalRight, bottom)
+            globalRight = globalLeft
+        }
     }
 
     fun shift(screenCenter: Int, viewCenter: Int): Int {
@@ -99,15 +71,14 @@ class SimpleLayoutManager(c: Context) : RecyclerView.LayoutManager() {
         val top = 0
         val bottom = height
         var scrolled = 0
-        Timber.d("$childCount")
         if (dx < 0) {
             while (scrolled > dx) {
                 val leftView = getChildAt(0)
                 val hangingLeft = Math.max(-getDecoratedLeft(leftView), 0)
                 val scrollBy = Math.min(scrolled - dx, hangingLeft)
                 scrolled -= scrollBy
-                scrolledOffset += scrollBy
                 offsetChildrenHorizontal(scrollBy)
+                offset -=scrollBy
                 if (scrolled > dx) {
                     val v = recycler.getViewForPosition(mFirstPosition + childCount)
                     val right = getDecoratedLeft(leftView)
@@ -126,7 +97,6 @@ class SimpleLayoutManager(c: Context) : RecyclerView.LayoutManager() {
         dy: Int, recycler: RecyclerView.Recycler,
         state: RecyclerView.State?
     ): Int {
-        Timber.d("$childCount")
         if (childCount == 0) {
             return 0
         }
@@ -176,58 +146,64 @@ class SimpleLayoutManager(c: Context) : RecyclerView.LayoutManager() {
         return scrolled
     }
 
-//    fun recycleViewsOutOfBounds(recycler: RecyclerView.Recycler) {
-//        val childCount = childCount
-//        val parentWidth = width
-//        val parentHeight = height
-//        var foundFirst = false
-//        var first = 0
-//        var last = 0
-//        for (i in 0 until childCount) {
-//            val v = getChildAt(i)
-//            if (v.hasFocus() ||
-//                getDecoratedRight(v) >= 0 &&
-//                getDecoratedLeft(v) <= parentWidth &&
-//                getDecoratedBottom(v) >= 0 &&
-//                getDecoratedTop(v) <= parentHeight
-//            ) {
-//                if (!foundFirst) {
-//                    first = i
-//                    foundFirst = true
-//                }
-//                last = i
-//            }
-//        }
-//        for (i in childCount - 1 downTo last + 1) {
-//            removeAndRecycleViewAt(i, recycler)
-//        }
-//        for (i in first - 1 downTo 0) {
-//            removeAndRecycleViewAt(i, recycler)
-//        }
-//        if (getChildCount() == 0) {
-//            mFirstPosition = 0
-//        } else {
-//            mFirstPosition += first
-//        }
-//        Timber.d("$mFirstPosition firstPostition")
-//    }
-
     fun recycleViewsOutOfBounds(recycler: RecyclerView.Recycler) {
         val childCount = childCount
         val parentWidth = width
         val parentHeight = height
-
+        var foundFirst = false
+        var first = 0
+        var last = 0
         for (i in 0 until childCount) {
             val v = getChildAt(i)
-            if (
-                getDecoratedRight(v) <= 0 ||
-                getDecoratedLeft(v) >= parentWidth &&
-                getDecoratedBottom(v) <= 0 &&
-                getDecoratedTop(v) >= parentHeight
+            if (v.hasFocus() ||
+                getDecoratedRight(v) >= 0 &&
+                getDecoratedLeft(v) <= parentWidth &&
+                getDecoratedBottom(v) >= 0 &&
+                getDecoratedTop(v) <= parentHeight
             ) {
-                removeAndRecycleViewAt(i, recycler)
+                if (!foundFirst && i == 0) {
+//                    Timber.d("${v.hasFocus()}, right = ${getDecoratedRight(v)}, left = ${getDecoratedLeft(v)}, bottom = ${getDecoratedBottom(v)}, top = ${getDecoratedTop(v)}")
+                }
+                if (!foundFirst) {
+                    first = i
+                    foundFirst = true
+                }
+                last = i
             }
         }
-        Timber.d("$mFirstPosition firstPostition $itemCount")
+        for (i in childCount - 1 downTo last + 1) {
+            removeAndRecycleViewAt(i, recycler)
+            Timber.d("childCount $i")
+            mFirstPosition ++
+            this.offset = 0
+        }
+        for (i in first - 1 downTo 0) {
+            removeAndRecycleViewAt(i, recycler)
+            Timber.d("first $i")
+        }
+        if (getChildCount() == 0) {
+            mFirstPosition = 0
+        } else {
+            mFirstPosition += first
+        }
     }
+
+//    fun recycleViewsOutOfBounds(recycler: RecyclerView.Recycler) {
+//        val childCount = childCount
+//        val parentWidth = width
+//        val parentHeight = height
+//
+//        for (i in 0 until childCount) {
+//            val v = getChildAt(i)
+//            if (
+//                getDecoratedRight(v) <= 0 ||
+//                getDecoratedLeft(v) >= parentWidth &&
+//                getDecoratedBottom(v) <= 0 &&
+//                getDecoratedTop(v) >= parentHeight
+//            ) {
+//                removeAndRecycleViewAt(i, recycler)
+//            }
+//        }
+//        Timber.d("$mFirstPosition firstPostition $itemCount")
+//    }
 }

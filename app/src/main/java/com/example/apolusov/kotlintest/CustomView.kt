@@ -34,7 +34,7 @@ class CustomView : TextView {
         val currentWidth = (MeasureSpec.getSize(widthMeasureSpec))
         val newWidth  = (currentWidth * scaleFactor).roundToInt()
         val height = MeasureSpec.getSize(heightMeasureSpec)
-        setMeasuredDimension(newWidth, height)
+        setMeasuredDimension(currentWidth, height)
     }
 
 //    override fun onDraw(canvas: Canvas) {

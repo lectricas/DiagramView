@@ -30,7 +30,7 @@ class ExampleUnitTest {
 
 
 //        val dayToLoad = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
-        for (i in 1 downTo 1) {
+        for (i in 3 - 1 downTo 0) {
             println(i)
         }
 
