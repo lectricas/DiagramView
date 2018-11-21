@@ -32,13 +32,11 @@ class CustomView : TextView {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val currentWidth = (MeasureSpec.getSize(widthMeasureSpec))
-        val newWidth  = (currentWidth * scaleFactor).roundToInt()
         val height = MeasureSpec.getSize(heightMeasureSpec)
         setMeasuredDimension(currentWidth, height)
     }
 
 //    override fun onDraw(canvas: Canvas) {
-//        Timber.d("onDraw $width, $height")
-//        canvas.drawCircle(width / 2f, height / 2f, 100f, paint)
+//        canvas.drawCircle(width / 2f, height/ 2f, width / 2f, paint)
 //    }
 }

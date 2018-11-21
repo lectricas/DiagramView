@@ -16,29 +16,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val manager = SimpleLayoutManager(this@MainActivity)
+//        val manager = SimpleLayoutManager(this@MainActivity) {recyclerView.scrollState}
+        val manager = LinearLayoutManager(this@MainActivity, RecyclerView.HORIZONTAL, true)
 
         with(recyclerView) {
             adapter = SimpleAdapter()
             layoutManager = manager
         }
-
-       seek.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-           override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-               Timber.d("progress = $progress")
-               for (i in 0 until recyclerView.childCount) {
-                   (recyclerView.getChildAt(i) as CustomView).scaleView(progress.toFloat())
-               }
-           }
-
-           override fun onStartTrackingTouch(seekBar: SeekBar?) {
-
-           }
-
-           override fun onStopTrackingTouch(seekBar: SeekBar?) {
-
-           }
-
-       })
     }
 }

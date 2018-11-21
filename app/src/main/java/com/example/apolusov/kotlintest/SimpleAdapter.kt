@@ -9,7 +9,7 @@ import kotlinx.android.synthetic.main.item_new.view.*
 
 class SimpleAdapter : RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>() {
 
-    private var data = (0..9).map { "item number = $it" }
+    private var data = (0..9).map { "item here is some space number = $it" }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_new, parent, false)
