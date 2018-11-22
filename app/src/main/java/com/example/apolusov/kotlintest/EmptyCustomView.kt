@@ -7,11 +7,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.widget.TextView
-import timber.log.Timber
-import kotlin.math.roundToInt
 
-
-class CustomView : TextView {
+class EmptyCustomView : TextView {
 
     val path = Path()
     val paint = Paint().apply {
@@ -26,20 +23,8 @@ class CustomView : TextView {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, attributeSetId: Int) : super(context, attrs, attributeSetId)
 
-    fun scaleView(scaleFactor: Float) {
-        this.scaleFactor = scaleFactor
-        requestLayout()
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val currentWidth = (MeasureSpec.getSize(widthMeasureSpec))
-        val height = MeasureSpec.getSize(heightMeasureSpec)
-        setMeasuredDimension(currentWidth, height)
-    }
-
     override fun onDraw(canvas: Canvas) {
-        canvas.scale( 1 / App.scaleFactor, 1f, width/ 2f, height/2f)
-        canvas.translate((width * App.scaleFactor - width) / 2, 0f)
+        canvas.scale( 0.5f, 1f, width/ 2f, height/2f)
         canvas.drawText("SOMETEXT HERE ${App.scaleFactor}", width/2f, height/2f, paint)
 
     }

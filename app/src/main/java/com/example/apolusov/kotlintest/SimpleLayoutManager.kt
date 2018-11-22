@@ -4,6 +4,8 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING
 import android.view.ViewGroup
+import timber.log.Timber
+import kotlin.math.roundToInt
 
 class SimpleLayoutManager(c: Context, val scrollingState: () -> Int) : RecyclerView.LayoutManager() {
 
@@ -50,9 +52,9 @@ class SimpleLayoutManager(c: Context, val scrollingState: () -> Int) : RecyclerV
         val top = paddingTop
         val bottom = height - paddingBottom
         if (dx < 0) {
-            if (scrollingState.invoke() == SCROLL_STATE_DRAGGING) {
-                dx = Math.min((dx / 4), -1)
-            }
+//            if (scrollingState.invoke() == SCROLL_STATE_DRAGGING) {
+//                dx = Math.min((dx / 4), -1)
+//            }
             while (scrolled > dx) {
                 val leftView = getChildAt(0)
                 val hangingLeft = Math.max(-getDecoratedLeft(leftView), 0)
@@ -71,12 +73,14 @@ class SimpleLayoutManager(c: Context, val scrollingState: () -> Int) : RecyclerV
                 }
             }
         } else if (dx > 0) {
-            if (scrollingState.invoke() == SCROLL_STATE_DRAGGING) {
-                dx = Math.max((dx / 4), 1)
-            }
+//            if (scrollingState.invoke() == SCROLL_STATE_DRAGGING) {
+//                dx = Math.max((dx / 4), 1)
+//            }
+            Timber.d("scrollLeft")
             val parentWidth = width
             while (scrolled < dx) {
                 val rightView = getChildAt(childCount - 1)
+                val shift = (width * App.scaleFactor - width) / 2
                 val hangingRight = Math.max(getDecoratedRight(rightView) - parentWidth, 0)
                 val scrollBy = -Math.min(dx - scrolled, hangingRight)
                 scrolled -= scrollBy

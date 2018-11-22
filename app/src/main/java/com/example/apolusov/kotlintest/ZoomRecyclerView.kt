@@ -193,7 +193,7 @@ class ZoomRecyclerView : RecyclerView {
 //        } else {
 //
 //        }
-//        canvas.translate(mTranX, 0f)
+        canvas.translate((width * mScaleFactor - width) / -2, 0f)
         canvas.scale(mScaleFactor, 1f, width/ 2f, height/2f)
         super.dispatchDraw(canvas)
         for (i in 0 until childCount + 1) {
@@ -315,6 +315,7 @@ class ZoomRecyclerView : RecyclerView {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             val mLastScale = mScaleFactor
             mScaleFactor *= detector.scaleFactor
+            App.scaleFactor = mScaleFactor
             // Fix scaleFactor
             mScaleFactor = Math.max(mMinScaleFactor, Math.min(mScaleFactor, mMaxScaleFactor))
 
@@ -342,7 +343,7 @@ class ZoomRecyclerView : RecyclerView {
                 mScaleCenterY = -mTranY / (mScaleFactor - 1)
                 mScaleCenterX = if (java.lang.Float.isNaN(mScaleCenterX)) 0f else mScaleCenterX
                 mScaleCenterY = if (java.lang.Float.isNaN(mScaleCenterY)) 0f else mScaleCenterY
-                zoom(mScaleFactor, mDefaultScaleFactor)
+//                zoom(mScaleFactor, mDefaultScaleFactor)
             }
             isScaling = false
         }

@@ -1,6 +1,5 @@
 package com.example.apolusov.kotlintest
 
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -9,10 +8,26 @@ import kotlinx.android.synthetic.main.item_new.view.*
 
 class SimpleAdapter : RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>() {
 
+    private val EMPTY_VIEW = 0
+    private val CONTENT_VIEW = 1
+
     private var data = (0..9).map { "item here is some space number = $it" }
 
+    override fun getItemViewType(position: Int): Int {
+        when (position) {
+//            0 -> return EMPTY_VIEW
+//            9 -> return EMPTY_VIEW
+            else -> return CONTENT_VIEW
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_new, parent, false)
+        val layoutRes = when (viewType) {
+            EMPTY_VIEW -> R.layout.item_empty
+            else ->  R.layout.item_new
+        }
+
+        val view = LayoutInflater.from(parent.context).inflate(layoutRes, parent, false)
         return SimpleViewHolder(view)
     }
 
@@ -22,7 +37,7 @@ class SimpleAdapter : RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>() {
 
     class SimpleViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun bind(item: String) {
-            itemView.someText.text = item
+            itemView.someText?.text = item
         }
     }
 
