@@ -4,7 +4,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.view.*
+import com.example.apolusov.kotlintest.diagram.DayViewPort
+import com.firstlinesoftware.diabetus.diagram.DayItem
 import timber.log.Timber
 
 
@@ -18,35 +21,27 @@ class CustomView : View {
         const val INITIAL_SCROLL = 0f
     }
 
-    var currentScroll = INITIAL_SCROLL
-
-    private var series = listOf<PointM>()
-    private var currentSeries = listOf<PointM>()
-    private var pixelSeries = listOf<PointD>()
+    private var daysData = listOf<DayItem>()
     private var maxWidthInPoints = 0f
     private var maxHeightInPoints = 0f
     private var viewWidthInPixels = 0f
     private var viewHeightInPixels = 0f
+
+    private var rectList = mutableListOf<DayViewPort>()
 
     val paint = Paint().apply {
         color = Color.BLACK
         textSize = 30f
     }
 
-    //what this variable Do???
-    var startPageLeft = 0
-    var startPageRight = 0
-    var sliceLeft = 0
-    var sliceRight = 0
-    var deltaX = 0f
-    var page = 0
+    val rectPaint = Paint().apply {
+        color = Color.BLUE
+    }
 
-    var offsetLeft = (startPageRight - startPageLeft) / 2 - maxWidthInPoints / 2
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            moveView(distanceX.reverseSign())
-            getData(distanceX)
+            scrollView(distanceX)
             return true
         }
     }
@@ -58,7 +53,9 @@ class CustomView : View {
         }
     }
 
-    constructor(context: Context, newDataListener: NewDataListener, defaultWidth: Int, defaultHeight: Int) : super(context) {
+    constructor(context: Context, newDataListener: NewDataListener, defaultWidth: Int, defaultHeight: Int) : super(
+        context
+    ) {
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
@@ -72,62 +69,85 @@ class CustomView : View {
         super.onLayout(changed, left, top, right, bottom)
         viewWidthInPixels = width.toFloat()
         viewHeightInPixels = height.toFloat()
+        val rectF = RectF(0f, 0f, viewWidthInPixels, viewHeightInPixels)
+        val dayViewPort = DayViewPort.construct(rectF, daysData.first())
+        rectList.add(dayViewPort)
     }
 
     override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        pixelSeries.forEach {
-            canvas.drawText(it.text.toString(), it.x, it.y, paint)
-            canvas.drawCircle(it.x, it.y, 5f, paint)
+        rectList.map { it.rectF }.forEach { rect ->
+            canvas.drawRect(rect, rectPaint)
+            canvas.drawText("${rect.width()}", rect.centerX(), rect.centerY(), paint)
+            canvas.drawRect(rect.left + 200, rect.centerY(), rect.right - 200, rect.centerY() + 50, paint)
         }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
-        scrollDetector.onTouchEvent(event)
         scaleDetector.onTouchEvent(event)
+        scrollDetector.onTouchEvent(event)
         return true
     }
 
-    fun moveView(distanceX: Float) {
-        pixelSeries = pixelSeries.map {
-            PointD(it.x.translate(distanceX), it.y, it.text)
+    fun scrollView(dx: Float) {
+        var scrolled = 0f
+        if (dx > 0) {
+            Timber.d("movingLeft $dx")
+            while (scrolled < dx) {
+                val rightView = rectList.last().rectF
+                val hangingRight = Math.max(rightView.right - viewWidthInPixels, 0f)
+                val scrollBy = -Math.min(dx - scrolled, hangingRight)
+                scrolled -=scrollBy
+                offsetChildrenHorizontal(scrollBy)
+                if (scrolled < dx) {
+                    val left = rightView.right
+                    val right = left + rightView.width()
+                    val rect = RectF(left, rightView.top, right, rightView.bottom)
+                    rectList.add(rect)
+                    if (rectList.size > 2) {
+                        rectList.removeAt(0)
+                    }
+                } else {
+                    break
+                }
+            }
+
+        } else if (dx < 0) {
+            Timber.d("movingRight $dx")
+            while (scrolled > dx) {
+                val leftView = rectList.first().rectF
+                val hangingLeft = Math.max(-leftView.left, 0f)
+                val scrollBy = Math.min(scrolled - dx, hangingLeft)
+                scrolled -= scrollBy
+                offsetChildrenHorizontal(scrollBy)
+                if (scrolled > dx) {
+                    val right = leftView.left
+                    val left = right - leftView.width()
+                    val rect = RectF(left, leftView.top, right, leftView.bottom)
+                    rectList.add(0, rect)
+                    if (rectList.size > 2) {
+                        rectList.removeAt(rectList.lastIndex)
+                    }
+                } else {
+                    break
+                }
+            }
         }
+
         invalidate()
+    }
+
+    fun offsetChildrenHorizontal(scrollBy: Float) {
+        rectList.forEach {
+            it.rectF.offset(scrollBy, 0f)
+        }
     }
 
     fun scaleView(factor: Float) {
-        pixelSeries = pixelSeries.map {
-            it.scale(factor, viewWidthInPixels / 2, viewHeightInPixels / 2)
+        Timber.d("size = ${rectList.size}")
+        rectList.forEach {
+            scaleRectHorizontally(it, factor)
         }
         invalidate()
-    }
-
-    fun getData(distanceX: Float) {
-        currentScroll = currentScroll + distanceX
-        deltaX = deltaX + getCalculatedX(distanceX, viewWidthInPixels, maxWidthInPoints)
-        if (page != deltaX.toInt()) {
-            page = deltaX.toInt()
-        } else {
-            return
-        }
-
-        if (page.rem(4) == 0) {
-            if (startPageLeft + page != sliceLeft && sliceRight != startPageRight + page) {
-                sliceLeft = startPageLeft + page
-                sliceRight = startPageRight + page
-                currentSeries = series.subList(sliceLeft, sliceRight).toMutableList()
-                pixelSeries = currentSeries.map {
-                    PointD(
-                        getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels).translate(-1 * currentScroll),
-                        getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
-                        it.x
-                    )
-                }
-                Timber.d("$viewWidthInPixels, $viewHeightInPixels")
-                Timber.d("$pixelSeries")
-                invalidate()
-            }
-        }
     }
 
     //move from real world coordinates to the viewport and vice versa
@@ -140,41 +160,32 @@ class CustomView : View {
         return newHight - oldY / oldHight * newHight
     }
 
-    interface NewDataListener {
-        fun onNewData(point: PointM)
-    }
-
-    fun setData(data: List<PointM>) {
-        if (series.isEmpty()) {
-            series = data
-            //todo set data properly
-//            startPageLeft =
-            currentSeries = series.subList(startPageLeft, startPageRight)
-            currentScroll = currentScroll + getCalculatedX(startPageLeft.toFloat() + offsetLeft,  maxWidthInPoints, viewWidthInPixels)
+    fun setData(data: List<DayItem>) {
+        if (daysData.isEmpty()) {
+            daysData = daysData.plus(data)
+            requestLayout()
         } else {
-
+            daysData = daysData.plus(data)
+            invalidate()
         }
-        pixelSeries = currentSeries.map {
-            PointD(
-                getCalculatedX(it.x, maxWidthInPoints, viewWidthInPixels) - currentScroll,
-                getCalculatedY(it.y, maxHeightInPoints, viewHeightInPixels),
-                it.x
-            )
-        }
-        invalidate()
     }
-}
 
-private fun Float.reverseSign(): Float = -this
+    private fun scaleRectHorizontally(rectF: RectF, scaleFactor: Float) {
+        val sLeft = (rectF.left - viewWidthInPixels / 2) * scaleFactor
+        val sRight = (rectF.right - viewWidthInPixels / 2) * scaleFactor
 
-private fun Float.translate(distance: Float) = this + distance
 
-private fun PointD.scale(scaleFactor: Float, centerX: Float, centerY: Float): PointD {
-    val tX = this.x - centerX
-    val tY = this.y - centerY
-    val sX = scaleFactor * tX
-    val sY = scaleFactor * tY
-    val nX = sX + centerX
-    val nY = sY + centerY
-    return PointD(nX, nY, this.text)
+        rectF.left = sLeft + viewWidthInPixels / 2
+        rectF.right = sRight + viewWidthInPixels /2
+
+        //todo scale vertically
+//        val sTop = (rectF.top - viewHeightInPixels / 2)
+//        val sBottom = (rectF.bottom - viewHeightInPixels / 2) * scaleFactor
+//        rectF.top = sTop + viewHeightInPixels /2
+//        rectF.bottom = sBottom + viewHeightInPixels /2
+    }
+
+    interface NewDataListener {
+        fun onNewData(point: DayItem)
+    }
 }

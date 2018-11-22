@@ -11,9 +11,4 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-    <!--<com.example.apolusov.kotlintest.SmoothLineChart-->
-            <!--android:id="@+id/smoothChart"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"/>-->
-
 </android.support.constraint.ConstraintLayout>
