@@ -29,9 +29,11 @@ class CustomView : View {
 
     private var rectList = mutableListOf<DayViewPort>()
 
+    private var firstPosition = 0
+
     val paint = Paint().apply {
         color = Color.BLACK
-        textSize = 30f
+        textSize = 50f
     }
 
     val rectPaint = Paint().apply {
@@ -69,16 +71,19 @@ class CustomView : View {
         super.onLayout(changed, left, top, right, bottom)
         viewWidthInPixels = width.toFloat()
         viewHeightInPixels = height.toFloat()
-        val rectF = RectF(0f, 0f, viewWidthInPixels, viewHeightInPixels)
-        val dayViewPort = DayViewPort.construct(rectF, daysData.first())
-        rectList.add(dayViewPort)
+
+        if (daysData.isNotEmpty()) {
+            val rectF = RectF(0f, 0f, viewWidthInPixels, viewHeightInPixels)
+            val dayViewPort = DayViewPort.construct(rectF, daysData.first())
+            rectList.add(dayViewPort)
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
-        rectList.map { it.rectF }.forEach { rect ->
-            canvas.drawRect(rect, rectPaint)
-            canvas.drawText("${rect.width()}", rect.centerX(), rect.centerY(), paint)
-            canvas.drawRect(rect.left + 200, rect.centerY(), rect.right - 200, rect.centerY() + 50, paint)
+        rectList.forEach { day ->
+//            canvas.drawRect(day.rectF, rectPaint)
+            canvas.drawText(day.text, day.rectF.centerX(), day.rectF.centerY(), paint)
+            canvas.drawRect(day.rectF.left + 200, day.rectF.centerY(), day.rectF.right - 200, day.rectF.centerY() + 50, paint)
         }
     }
 
@@ -89,20 +94,23 @@ class CustomView : View {
     }
 
     fun scrollView(dx: Float) {
+        Timber.d("firstPosition = $firstPosition")
         var scrolled = 0f
         if (dx > 0) {
-            Timber.d("movingLeft $dx")
+            Timber.d("movingRight $dx")
             while (scrolled < dx) {
                 val rightView = rectList.last().rectF
                 val hangingRight = Math.max(rightView.right - viewWidthInPixels, 0f)
                 val scrollBy = -Math.min(dx - scrolled, hangingRight)
                 scrolled -=scrollBy
                 offsetChildrenHorizontal(scrollBy)
-                if (scrolled < dx) {
+                if (scrolled < dx && firstPosition - 1 > 0) {
                     val left = rightView.right
                     val right = left + rightView.width()
                     val rect = RectF(left, rightView.top, right, rightView.bottom)
-                    rectList.add(rect)
+                    firstPosition --
+
+                    rectList.add(DayViewPort.construct(rect, daysData[firstPosition - 1]))
                     if (rectList.size > 2) {
                         rectList.removeAt(0)
                     }
@@ -112,18 +120,20 @@ class CustomView : View {
             }
 
         } else if (dx < 0) {
-            Timber.d("movingRight $dx")
+            Timber.d("movingLeft $dx")
             while (scrolled > dx) {
                 val leftView = rectList.first().rectF
                 val hangingLeft = Math.max(-leftView.left, 0f)
+                Timber.d("hangingLeft = $hangingLeft, ${rectList.size}")
                 val scrollBy = Math.min(scrolled - dx, hangingLeft)
                 scrolled -= scrollBy
                 offsetChildrenHorizontal(scrollBy)
-                if (scrolled > dx) {
+                if (scrolled > dx && daysData.lastIndex > firstPosition) {
                     val right = leftView.left
                     val left = right - leftView.width()
                     val rect = RectF(left, leftView.top, right, leftView.bottom)
-                    rectList.add(0, rect)
+                    firstPosition++
+                    rectList.add(0, DayViewPort.construct(rect, daysData[firstPosition]))
                     if (rectList.size > 2) {
                         rectList.removeAt(rectList.lastIndex)
                     }
@@ -145,19 +155,9 @@ class CustomView : View {
     fun scaleView(factor: Float) {
         Timber.d("size = ${rectList.size}")
         rectList.forEach {
-            scaleRectHorizontally(it, factor)
+//            scaleRectHorizontally(it, factor)
         }
         invalidate()
-    }
-
-    //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedX(oldX: Float, oldWidth: Float, newWidth: Float): Float {
-        return oldX / oldWidth * newWidth
-    }
-
-    //move from real world coordinates to the viewport and vice versa
-    fun getCalculatedY(oldY: Float, oldHight: Float, newHight: Float): Float {
-        return newHight - oldY / oldHight * newHight
     }
 
     fun setData(data: List<DayItem>) {
