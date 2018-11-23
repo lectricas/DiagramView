@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
         val customView = CustomView(this, this, 10, 10)
         container.addView(customView)
         customView.post {
-            customView.setData((0..1000).map { dayNumber ->
+            customView.setData((0..10).map { dayNumber ->
                 val day = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3, 0, "a") }
                 DayItem(day, day, day, dayNumber)
             })

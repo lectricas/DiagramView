@@ -1,14 +1,19 @@
 package com.example.apolusov.kotlintest
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.support.v4.view.ViewCompat
 import android.view.*
+import android.view.animation.DecelerateInterpolator
+import android.widget.OverScroller
 import com.example.apolusov.kotlintest.diagram.DayViewPort
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import timber.log.Timber
+import kotlin.math.roundToInt
 
 
 class CustomView : View {
@@ -16,9 +21,14 @@ class CustomView : View {
     private var newDataListener: NewDataListener
     private var scrollDetector: GestureDetector
     private var scaleDetector: ScaleGestureDetector
+    private val valueAnimator = ValueAnimator().apply {
+        duration = 2000
+        interpolator = DecelerateInterpolator()
+    }
+
 
     companion object {
-        const val INITIAL_SCROLL = 0f
+        const val VELOCITY_REDUCER = 100f
     }
 
     private var daysData = listOf<DayItem>()
@@ -46,6 +56,12 @@ class CustomView : View {
             scrollView(distanceX)
             return true
         }
+
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+            valueAnimator.setFloatValues(- velocityX / VELOCITY_REDUCER, 0f)
+            valueAnimator.start()
+            return true
+        }
     }
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -64,6 +80,10 @@ class CustomView : View {
         this.newDataListener = newDataListener
         maxWidthInPoints = defaultWidth.toFloat()
         maxHeightInPoints = defaultHeight.toFloat()
+
+        valueAnimator.addUpdateListener {
+            scrollView(it.animatedValue as Float)
+        }
     }
 
 
@@ -81,23 +101,21 @@ class CustomView : View {
 
     override fun onDraw(canvas: Canvas) {
         rectList.forEach { day ->
-//            canvas.drawRect(day.rectF, rectPaint)
             canvas.drawText(day.text, day.rectF.centerX(), day.rectF.centerY(), paint)
             canvas.drawRect(day.rectF.left + 200, day.rectF.centerY(), day.rectF.right - 200, day.rectF.centerY() + 50, paint)
         }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+        valueAnimator.cancel()
         scaleDetector.onTouchEvent(event)
         scrollDetector.onTouchEvent(event)
         return true
     }
 
     fun scrollView(dx: Float) {
-        Timber.d("firstPosition = $firstPosition")
         var scrolled = 0f
         if (dx > 0) {
-            Timber.d("movingRight $dx")
             while (scrolled < dx) {
                 val rightView = rectList.last().rectF
                 val hangingRight = Math.max(rightView.right - viewWidthInPixels, 0f)
@@ -120,11 +138,9 @@ class CustomView : View {
             }
 
         } else if (dx < 0) {
-            Timber.d("movingLeft $dx")
             while (scrolled > dx) {
                 val leftView = rectList.first().rectF
                 val hangingLeft = Math.max(-leftView.left, 0f)
-                Timber.d("hangingLeft = $hangingLeft, ${rectList.size}")
                 val scrollBy = Math.min(scrolled - dx, hangingLeft)
                 scrolled -= scrollBy
                 offsetChildrenHorizontal(scrollBy)
@@ -153,8 +169,8 @@ class CustomView : View {
     }
 
     fun scaleView(factor: Float) {
-        Timber.d("size = ${rectList.size}")
         rectList.forEach {
+            //todo scale
 //            scaleRectHorizontally(it, factor)
         }
         invalidate()
