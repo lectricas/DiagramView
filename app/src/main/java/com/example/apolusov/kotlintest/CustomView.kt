@@ -2,18 +2,12 @@ package com.example.apolusov.kotlintest
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
-import android.support.v4.view.ViewCompat
+import android.graphics.*
 import android.view.*
 import android.view.animation.DecelerateInterpolator
-import android.widget.OverScroller
 import com.example.apolusov.kotlintest.diagram.DayViewPort
 import com.firstlinesoftware.diabetus.diagram.DayItem
-import timber.log.Timber
-import kotlin.math.roundToInt
+import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 
 
 class CustomView : View {
@@ -31,25 +25,33 @@ class CustomView : View {
         const val VELOCITY_REDUCER = 100f
     }
 
-    private var daysData = listOf<DayItem>()
     private var maxWidthInPoints = 0f
     private var maxHeightInPoints = 0f
     private var viewWidthInPixels = 0f
     private var viewHeightInPixels = 0f
 
+    private var daysData = listOf<DayItem>()
     private var rectList = mutableListOf<DayViewPort>()
 
     private var firstPosition = 0
+    private var completeScaleFactor = 1f
 
-    val paint = Paint().apply {
+    private val path = Path()
+
+    private val paint = Paint().apply {
         color = Color.BLACK
         textSize = 50f
     }
 
-    val rectPaint = Paint().apply {
+    private val rectPaint = Paint().apply {
         color = Color.BLUE
     }
 
+    val bezierLinePaint = Paint().apply {
+        color = Color.YELLOW
+        strokeWidth = 4f
+        style = Paint.Style.STROKE
+    }
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
@@ -58,7 +60,7 @@ class CustomView : View {
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-            valueAnimator.setFloatValues(- velocityX / VELOCITY_REDUCER, 0f)
+            valueAnimator.setFloatValues(-velocityX / VELOCITY_REDUCER, 0f)
             valueAnimator.start()
             return true
         }
@@ -66,6 +68,7 @@ class CustomView : View {
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
+            completeScaleFactor *= detector.scaleFactor
             scaleView(detector.scaleFactor)
             return true
         }
@@ -101,8 +104,55 @@ class CustomView : View {
 
     override fun onDraw(canvas: Canvas) {
         rectList.forEach { day ->
-            canvas.drawText(day.text, day.rectF.centerX(), day.rectF.centerY(), paint)
-            canvas.drawRect(day.rectF.left + 200, day.rectF.centerY(), day.rectF.right - 200, day.rectF.centerY() + 50, paint)
+            drawPoints(day.now, canvas)
+            drawPoints(day.now, canvas)
+            drawPoints(day.now, canvas)
+            drawBezierCurve(day.now, canvas, 1)
+            drawBezierCurve(day.before, canvas, 1)
+            drawBezierCurve(day.after, canvas, 1)
+//            drawGridAndTime(canvas, day.rectF)
+        }
+    }
+
+    private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
+        points.forEach {
+            canvas.drawCircle(it.x, it.y, 10f, paint)
+            canvas.drawText(it.text, it.x, it.y, paint)
+        }
+    }
+
+    private fun drawBezierCurve(points: List<DiagramPoint>, canvas: Canvas, tension: Int) {
+        path.reset()
+        path.moveTo(points.first().x, points.first().y)
+        for (i in 0 until points.size - 1) {
+            val p0 = if (i > 0) points[i - 1] else points[0]
+            val p1 = points[i]
+            val p2 = points[i + 1]
+            val p3 = if (i != points.size - 2) points[i + 2] else p2
+
+            val cp1x = p1.x + (p2.x - p0.x) / 6 * tension
+            val cp1y = p1.y + (p2.y - p0.y) / 6 * tension
+
+            val cp2x = p2.x - (p3.x - p1.x) / 6 * tension
+            val cp2y = p2.y - (p3.y - p1.y) / 6 * tension
+            path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
+        }
+        canvas.drawPath(path, bezierLinePaint)
+    }
+
+    private fun drawGridAndTime(canvas: Canvas, rectF: RectF) {
+        val linesNumber =
+            when (completeScaleFactor) {
+                in 0..1 -> 48
+                in 1..2 -> 24
+                in 2..3 -> 12
+                in 3..4 -> 6
+                else -> 96
+            }
+
+        val distanceBetweenLines = rectF.width() / linesNumber
+        for (i in 0 until linesNumber) {
+            canvas.drawLine(i * distanceBetweenLines + rectF.left, 0f , i * distanceBetweenLines + rectF.left, rectF.height(), paint)
         }
     }
 
@@ -120,13 +170,13 @@ class CustomView : View {
                 val rightView = rectList.last().rectF
                 val hangingRight = Math.max(rightView.right - viewWidthInPixels, 0f)
                 val scrollBy = -Math.min(dx - scrolled, hangingRight)
-                scrolled -=scrollBy
+                scrolled -= scrollBy
                 offsetChildrenHorizontal(scrollBy)
                 if (scrolled < dx && firstPosition - 1 > 0) {
                     val left = rightView.right
                     val right = left + rightView.width()
                     val rect = RectF(left, rightView.top, right, rightView.bottom)
-                    firstPosition --
+                    firstPosition--
 
                     rectList.add(DayViewPort.construct(rect, daysData[firstPosition - 1]))
                     if (rectList.size > 2) {
@@ -162,16 +212,15 @@ class CustomView : View {
         invalidate()
     }
 
-    fun offsetChildrenHorizontal(scrollBy: Float) {
+    private fun offsetChildrenHorizontal(scrollBy: Float) {
         rectList.forEach {
-            it.rectF.offset(scrollBy, 0f)
+            it.offsetChildrenHorizontal(scrollBy)
         }
     }
 
     fun scaleView(factor: Float) {
         rectList.forEach {
-            //todo scale
-//            scaleRectHorizontally(it, factor)
+            it.scaleHorizontally(factor, viewWidthInPixels)
         }
         invalidate()
     }
@@ -184,21 +233,6 @@ class CustomView : View {
             daysData = daysData.plus(data)
             invalidate()
         }
-    }
-
-    private fun scaleRectHorizontally(rectF: RectF, scaleFactor: Float) {
-        val sLeft = (rectF.left - viewWidthInPixels / 2) * scaleFactor
-        val sRight = (rectF.right - viewWidthInPixels / 2) * scaleFactor
-
-
-        rectF.left = sLeft + viewWidthInPixels / 2
-        rectF.right = sRight + viewWidthInPixels /2
-
-        //todo scale vertically
-//        val sTop = (rectF.top - viewHeightInPixels / 2)
-//        val sBottom = (rectF.bottom - viewHeightInPixels / 2) * scaleFactor
-//        rectF.top = sTop + viewHeightInPixels /2
-//        rectF.bottom = sBottom + viewHeightInPixels /2
     }
 
     interface NewDataListener {

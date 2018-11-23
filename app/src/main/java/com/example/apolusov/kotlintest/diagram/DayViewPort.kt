@@ -19,11 +19,59 @@ class DayViewPort(
         fun construct(rectF: RectF, dayItem: DayItem): DayViewPort {
             return DayViewPort(
                 rectF,
-                dayItem.before.map { it.convert(maxViewWidthPoints, rectF.width(), maxViewHeightPoints, rectF.height()) },
-                dayItem.now.map { it.convert(maxViewWidthPoints, rectF.width(), maxViewHeightPoints, rectF.height()) },
-                dayItem.after.map { it.convert(maxViewWidthPoints, rectF.width(), maxViewHeightPoints, rectF.height()) },
+                dayItem.before.map {
+                    it.convert(
+                        maxViewWidthPoints,
+                        rectF.width(),
+                        maxViewHeightPoints,
+                        rectF.height(),
+                        rectF.left
+                    )
+                },
+                dayItem.now.map {
+                    it.convert(
+                        maxViewWidthPoints,
+                        rectF.width(),
+                        maxViewHeightPoints,
+                        rectF.height(),
+                        rectF.left
+                    )
+                },
+                dayItem.after.map {
+                    it.convert(
+                        maxViewWidthPoints,
+                        rectF.width(),
+                        maxViewHeightPoints,
+                        rectF.height(),
+                        rectF.left
+                    )
+                },
                 dayItem.dayNumber.toString()
             )
         }
     }
+
+    fun scaleHorizontally(factor: Float, viewWidthInPixels: Float) {
+        val sLeft = (rectF.left - viewWidthInPixels / 2) * factor
+        val sRight = (rectF.right - viewWidthInPixels / 2) * factor
+        rectF.left = sLeft + viewWidthInPixels / 2
+        rectF.right = sRight + viewWidthInPixels / 2
+        before.forEach { it.scale(factor, viewWidthInPixels) }
+        now.forEach { it.scale(factor, viewWidthInPixels) }
+        after.forEach { it.scale(factor, viewWidthInPixels) }
+    }
+
+    fun offsetChildrenHorizontal(scrollBy: Float) {
+        rectF.offset(scrollBy, 0f)
+        before.forEach { it.offset(scrollBy) }
+        now.forEach { it.offset(scrollBy) }
+        after.forEach { it.offset(scrollBy) }
+    }
+
+//    fun scaleVertically(factor: Float) {
+//        val sTop = (rectF.top - viewHeightInPixels / 2) * factor
+//        val sBottom = (rectF.bottom - viewHeightInPixels / 2) * factor
+//        rectF.top = sTop + viewHeightInPixels /2
+//        rectF.bottom = sBottom + viewHeightInPixels /2
+//    }
 }
