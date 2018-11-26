@@ -8,12 +8,14 @@ import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
+import timber.log.Timber
 import kotlin.math.roundToInt
 
 
 class CustomView : View {
 
     private var newDataListener: NewDataListener
+    private var pointClickListener: PointClickListener
     private var scrollDetector: GestureDetector
     private var scaleDetector: ScaleGestureDetector
     private val valueAnimator = ValueAnimator().apply {
@@ -25,6 +27,7 @@ class CustomView : View {
     companion object {
         const val VELOCITY_REDUCER = 100f
         const val BEZIER_TENSION = 1f
+        const val TOUCH_PRECISION = 20f
     }
 
     private var maxWidthInPoints = 0f
@@ -66,6 +69,11 @@ class CustomView : View {
             valueAnimator.start()
             return true
         }
+
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
+            findClickedPoint(e.x, e.y)
+            return true
+        }
     }
 
     private val scaleListener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -76,13 +84,20 @@ class CustomView : View {
         }
     }
 
-    constructor(context: Context, newDataListener: NewDataListener, defaultWidth: Int, defaultHeight: Int) : super(
+    constructor(
+        context: Context,
+        newDataListener: NewDataListener,
+        pointClickListener: PointClickListener,
+        defaultWidth: Int,
+        defaultHeight: Int
+    ) : super(
         context
     ) {
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         scrollDetector = GestureDetector(context, scrollListener)
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
+        this.pointClickListener = pointClickListener
         maxWidthInPoints = defaultWidth.toFloat()
         maxHeightInPoints = defaultHeight.toFloat()
 
@@ -110,7 +125,7 @@ class CustomView : View {
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
         valueAnimator.cancel()
         scaleDetector.onTouchEvent(event)
         scrollDetector.onTouchEvent(event)
@@ -169,6 +184,18 @@ class CustomView : View {
     private fun offsetChildrenHorizontal(scrollBy: Float) {
         rectList.forEach {
             it.offsetChildrenHorizontal(scrollBy)
+        }
+    }
+
+    fun findClickedPoint(approxX: Float, approxY: Float) {
+        rectList.forEach { day ->
+            day.points.forEach { diagramPoint ->
+                if (diagramPoint.x in approxX - TOUCH_PRECISION..approxX + TOUCH_PRECISION &&
+                    diagramPoint.y in approxY - TOUCH_PRECISION..approxY + TOUCH_PRECISION
+                ) {
+                    pointClickListener.onPointClick(diagramPoint)
+                }
+            }
         }
     }
 
@@ -259,5 +286,9 @@ class CustomView : View {
 
     interface NewDataListener {
         fun onNewData(point: DayItem)
+    }
+
+    interface PointClickListener {
+        fun onPointClick(point: DiagramPoint)
     }
 }

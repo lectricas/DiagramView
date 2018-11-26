@@ -5,17 +5,18 @@ import android.support.v7.app.AppCompatActivity
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 import kotlinx.android.synthetic.main.activity_main.*
+import timber.log.Timber
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
+class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView.PointClickListener {
 
     val r = Random()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val customView = CustomView(this, this, 10, 10)
+        val customView = CustomView(this, this, this, 10, 10)
         container.addView(customView)
         customView.post {
             customView.setData((0..10).map { dayNumber ->
@@ -29,5 +30,9 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener {
 
     override fun onNewData(point: DayItem) {
 
+    }
+
+    override fun onPointClick(point: DiagramPoint) {
+        Timber.d(point.text)
     }
 }
