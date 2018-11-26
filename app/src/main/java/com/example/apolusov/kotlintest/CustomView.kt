@@ -8,6 +8,7 @@ import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
+import kotlin.math.roundToInt
 
 
 class CustomView : View {
@@ -23,6 +24,7 @@ class CustomView : View {
 
     companion object {
         const val VELOCITY_REDUCER = 100f
+        const val BEZIER_TENSION = 1f
     }
 
     private var maxWidthInPoints = 0f
@@ -32,26 +34,26 @@ class CustomView : View {
 
     private var daysData = listOf<DayItem>()
     private var rectList = mutableListOf<DayViewPort>()
+    private var bezierPoints = listOf<PointF>()
 
     private var firstPosition = 0
     private var completeScaleFactor = 1f
 
-    private val path = Path()
-
     private val paint = Paint().apply {
-        color = Color.BLACK
+        color = Color.WHITE
         textSize = 50f
     }
 
-    private val rectPaint = Paint().apply {
-        color = Color.BLUE
-    }
-
     val bezierLinePaint = Paint().apply {
-        color = Color.YELLOW
-        strokeWidth = 4f
+        color = Color.CYAN
+        strokeWidth = 5f
         style = Paint.Style.STROKE
     }
+
+    val bezierPath = Path()
+
+    lateinit var bitmap: Bitmap
+    lateinit var cacheCanvas: Canvas
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
@@ -89,71 +91,23 @@ class CustomView : View {
         }
     }
 
-
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         viewWidthInPixels = width.toFloat()
         viewHeightInPixels = height.toFloat()
 
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        cacheCanvas = Canvas(bitmap)
         if (daysData.isNotEmpty()) {
             val rectF = RectF(0f, 0f, viewWidthInPixels, viewHeightInPixels)
             val dayViewPort = DayViewPort.construct(rectF, daysData.first())
             rectList.add(dayViewPort)
+            drawOnCacheCanvas()
         }
     }
 
     override fun onDraw(canvas: Canvas) {
-        rectList.forEach { day ->
-            drawPoints(day.now, canvas)
-            drawPoints(day.now, canvas)
-            drawPoints(day.now, canvas)
-            drawBezierCurve(day.now, canvas, 1)
-            drawBezierCurve(day.before, canvas, 1)
-            drawBezierCurve(day.after, canvas, 1)
-//            drawGridAndTime(canvas, day.rectF)
-        }
-    }
-
-    private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
-        points.forEach {
-            canvas.drawCircle(it.x, it.y, 10f, paint)
-            canvas.drawText(it.text, it.x, it.y, paint)
-        }
-    }
-
-    private fun drawBezierCurve(points: List<DiagramPoint>, canvas: Canvas, tension: Int) {
-        path.reset()
-        path.moveTo(points.first().x, points.first().y)
-        for (i in 0 until points.size - 1) {
-            val p0 = if (i > 0) points[i - 1] else points[0]
-            val p1 = points[i]
-            val p2 = points[i + 1]
-            val p3 = if (i != points.size - 2) points[i + 2] else p2
-
-            val cp1x = p1.x + (p2.x - p0.x) / 6 * tension
-            val cp1y = p1.y + (p2.y - p0.y) / 6 * tension
-
-            val cp2x = p2.x - (p3.x - p1.x) / 6 * tension
-            val cp2y = p2.y - (p3.y - p1.y) / 6 * tension
-            path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
-        }
-        canvas.drawPath(path, bezierLinePaint)
-    }
-
-    private fun drawGridAndTime(canvas: Canvas, rectF: RectF) {
-        val linesNumber =
-            when (completeScaleFactor) {
-                in 0..1 -> 48
-                in 1..2 -> 24
-                in 2..3 -> 12
-                in 3..4 -> 6
-                else -> 96
-            }
-
-        val distanceBetweenLines = rectF.width() / linesNumber
-        for (i in 0 until linesNumber) {
-            canvas.drawLine(i * distanceBetweenLines + rectF.left, 0f , i * distanceBetweenLines + rectF.left, rectF.height(), paint)
-        }
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
@@ -208,7 +162,7 @@ class CustomView : View {
                 }
             }
         }
-
+        drawOnCacheCanvas()
         invalidate()
     }
 
@@ -222,6 +176,7 @@ class CustomView : View {
         rectList.forEach {
             it.scaleHorizontally(factor, viewWidthInPixels)
         }
+        drawOnCacheCanvas()
         invalidate()
     }
 
@@ -232,6 +187,73 @@ class CustomView : View {
         } else {
             daysData = daysData.plus(data)
             invalidate()
+        }
+    }
+
+    private fun drawOnCacheCanvas() {
+        bezierPoints = rectList.flatMap { day -> day.points.map { point -> PointF(point.x, point.y) } }
+        bezierPath.reset()
+        bezierPath.moveTo(bezierPoints.first().x, bezierPoints.first().y)
+        for (i in 0 until bezierPoints.size - 1) {
+            val p0 = if (i > 0) bezierPoints[i - 1] else bezierPoints[0]
+            val p1 = bezierPoints[i]
+            val p2 = bezierPoints[i + 1]
+            val p3 = if (i != bezierPoints.size - 2) bezierPoints[i + 2] else p2
+
+            val cp1x = p1.x + (p2.x - p0.x) / 6 * BEZIER_TENSION
+            val cp1y = p1.y + (p2.y - p0.y) / 6 * BEZIER_TENSION
+
+            val cp2x = p2.x - (p3.x - p1.x) / 6 * BEZIER_TENSION
+            val cp2y = p2.y - (p3.y - p1.y) / 6 * BEZIER_TENSION
+            bezierPath.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
+        }
+        cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        rectList.forEach { day ->
+            drawPoints(day.points, cacheCanvas)
+            drawGridAndTime(cacheCanvas, day.rectF)
+        }
+        cacheCanvas.drawPath(bezierPath, bezierLinePaint)
+        //todo glow
+    }
+
+    private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
+        points.forEach {
+            canvas.drawCircle(it.x, it.y, 10f, paint)
+            canvas.drawText(it.text, it.x, it.y, paint)
+        }
+    }
+
+    private fun drawGridAndTime(canvas: Canvas, rectF: RectF) {
+        val verticalLinesNumber =
+            when (completeScaleFactor) {
+                in 0..1 -> 8
+                in 1..2 -> 12
+                in 2..3 -> 24
+                in 3..4 -> 48
+                else -> 48
+            }
+
+        val distanceBetweenLines = rectF.width() / verticalLinesNumber
+        for (i in 0 until verticalLinesNumber) {
+            canvas.drawLine(
+                i * distanceBetweenLines + rectF.left,
+                0f,
+                i * distanceBetweenLines + rectF.left,
+                rectF.height(),
+                paint
+            )
+        }
+
+        val horizontalLinesNumber = maxHeightInPoints.roundToInt()
+        val verticalDistance = rectF.height() / horizontalLinesNumber
+        for (i in 0 until horizontalLinesNumber) {
+            canvas.drawLine(
+                0f,
+                i * verticalDistance,
+                rectF.width(),
+                i * verticalDistance,
+                paint
+            )
         }
     }
 
