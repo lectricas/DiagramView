@@ -28,6 +28,7 @@ class CustomView : View {
         const val VELOCITY_REDUCER = 100f
         const val BEZIER_TENSION = 1f
         const val TOUCH_PRECISION = 20f
+        const val ITEMS_LEFT_WHEN_LOAD = 5
     }
 
     private var maxWidthInPoints = 0f
@@ -176,6 +177,9 @@ class CustomView : View {
                     break
                 }
             }
+        }
+        if (daysData.size - firstPosition <= firstPosition) {
+            newDataListener.onNewData(daysData.last())
         }
         drawOnCacheCanvas()
         invalidate()

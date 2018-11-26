@@ -13,11 +13,14 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
 
     val r = Random()
 
+    lateinit var customView: CustomView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val customView = CustomView(this, this, this, 10, 10)
+        customView = CustomView(this, this, this, 10, 10)
         container.addView(customView)
+
         customView.post {
             customView.setData((0..10).map { dayNumber ->
                 val day = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3, 0, hourNumber.toString()) }
@@ -27,9 +30,13 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
 
     }
 
-
     override fun onNewData(point: DayItem) {
-
+        customView.post {
+            customView.setData((0..10).map { dayNumber ->
+                val day = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3, 0, hourNumber.toString()) }
+                DayItem(day, dayNumber)
+            })
+        }
     }
 
     override fun onPointClick(point: DiagramPoint) {
