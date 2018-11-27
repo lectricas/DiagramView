@@ -55,4 +55,6 @@ class DiagramBar(
         val mX = (x - viewWidthInPixels / 2) * factor
         x = mX + viewWidthInPixels / 2
     }
+
+    override fun toString() = "$x, $height"
 }

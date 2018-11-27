@@ -14,7 +14,7 @@ class DayViewPort(
     companion object {
 
         private const val maxViewWidthPoints = 24f
-        private const val maxViewHeightPoints = 5f
+        private const val maxViewHeightPoints = 600f
 
         fun construct(
             rectF: RectF,

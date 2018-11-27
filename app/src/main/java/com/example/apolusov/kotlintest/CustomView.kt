@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.*
 import android.os.Handler
 import android.os.Looper
+import android.support.v4.content.ContextCompat
 import android.view.*
 import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
@@ -35,21 +36,22 @@ class CustomView : View {
         interpolator = DecelerateInterpolator()
     }
 
-
     companion object {
         const val VELOCITY_REDUCER = 100f
         const val BEZIER_TENSION = 1f
         const val TOUCH_PRECISION = 20f
         const val ITEMS_LEFT_WHEN_LOAD = 5
-        const val BARS_WIDTH = 15
+        const val BARS_WIDTH = 7
         const val BAR_RADIUS = 15f
+        const val BAR_BOTTOM_MARGIN = 30f
         const val SCROLL_DEBOUNCE = 5L
+        const val TIME_LABELS_SHIFT = 50
     }
 
-    private var maxWidthInPoints = 0f
-    private var maxHeightInPoints = 0f
+    private var horizontalLinesNumber = 7f
     private var viewWidthInPixels = 0f
     private var viewHeightInPixels = 0f
+    private var otherMedsLineHeight = 0f
 
     private var daysData = listOf<DayItem>()
     private var rectList = mutableListOf<DayViewPort>()
@@ -58,28 +60,13 @@ class CustomView : View {
     private var firstPosition = 0
     private var completeScaleFactor = 1f
 
-    private val paint = Paint().apply {
+    private val LABELS = Paint().apply {
         color = Color.WHITE
-        textSize = 50f
+        textSize = 40f
     }
 
-    private val GREEN = Paint().apply {
-        color = Color.GREEN
-    }
-
-    private val CYAN = Paint().apply {
-        color = Color.CYAN
-        textSize = 50f
-    }
-
-    private val MAGENTA = Paint().apply {
-        color = Color.MAGENTA
-        textSize = 50f
-    }
-
-    private val YELLOW = Paint().apply {
-        color = Color.YELLOW
-        textSize = 50f
+    private val OTHER_MEDS_LINE = Paint().apply {
+        style = Paint.Style.FILL
     }
 
     private val bezierLinePaint = Paint().apply {
@@ -125,9 +112,7 @@ class CustomView : View {
     constructor(
         context: Context,
         newDataListener: NewDataListener,
-        pointClickListener: PointClickListener,
-        defaultWidth: Int,
-        defaultHeight: Int
+        pointClickListener: PointClickListener
     ) : super(
         context
     ) {
@@ -136,8 +121,7 @@ class CustomView : View {
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
         this.pointClickListener = pointClickListener
-        maxWidthInPoints = defaultWidth.toFloat()
-        maxHeightInPoints = defaultHeight.toFloat()
+        initPaintsAndSizes()
         valueAnimator.addUpdateListener {
             scrollHandler.removeCallbacks(scrollWorker)
             scrollWorker = ScrollWorker(it.animatedValue as Float)
@@ -145,6 +129,12 @@ class CustomView : View {
 //            scrollView(it.animatedValue as Float)
 
         }
+    }
+
+    fun initPaintsAndSizes() {
+        otherMedsLineHeight = resources.getDimension(R.dimen.other_meds_height)
+        OTHER_MEDS_LINE.color = ContextCompat.getColor(context, R.color.other_meds_line)
+        LABELS.textSize = resources.getDimension(R.dimen.time_labels_size)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -163,7 +153,7 @@ class CustomView : View {
     }
 
     override fun onDraw(canvas: Canvas) {
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        canvas.drawBitmap(bitmap, 0f, 0f, LABELS)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -277,11 +267,11 @@ class CustomView : View {
             val cp2y = p2.y - (p3.y - p1.y) / 6 * BEZIER_TENSION
             bezierPath.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
         }
-        cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR) //clear
         cacheCanvas.drawPath(bezierPath, bezierLinePaint)
         rectList.forEach { day ->
-            drawPoints(day.points, cacheCanvas)
             drawGridAndTime(cacheCanvas, day.rectF)
+            drawPoints(day.points, cacheCanvas)
             drawBars(day.bars, cacheCanvas)
         }
 
@@ -292,23 +282,25 @@ class CustomView : View {
 
     private fun drawBars(points: List<DiagramBar>, canvas: Canvas) {
         points.forEach {
-            val rectF = RectF(it.x - BARS_WIDTH, it.height, it.x + BARS_WIDTH, height + BAR_RADIUS)
+            val rectF = RectF(it.x - BARS_WIDTH, it.height - 50, it.x + BARS_WIDTH, height - 50f )
             val currentPaint = when (it.type) {
-                DiagramBar.TYPE_0 -> GREEN
-                DiagramBar.TYPE_1 -> CYAN
-                DiagramBar.TYPE_2 -> MAGENTA
-                DiagramBar.TYPE_3 -> YELLOW
-                else -> MAGENTA
+                DiagramBar.TYPE_0 -> LABELS
+                DiagramBar.TYPE_1 -> LABELS
+                DiagramBar.TYPE_2 -> LABELS
+                DiagramBar.TYPE_3 -> LABELS
+                else -> LABELS
 
             }
             canvas.drawRoundRect(rectF, BAR_RADIUS, BAR_RADIUS, currentPaint)
         }
+
+        canvas.drawRect(0f, height - otherMedsLineHeight - LABELS.textSize, width + 0f, height - LABELS.textSize, OTHER_MEDS_LINE)
     }
 
     private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
         points.forEach {
-            canvas.drawCircle(it.x, it.y, 12f, paint)
-//            canvas.drawText(it.text, it.x, it.y, paint)
+            canvas.drawCircle(it.x, it.y, 12f, LABELS)
+            canvas.drawText(it.text, it.x, it.y, LABELS)
         }
     }
 
@@ -328,12 +320,16 @@ class CustomView : View {
                 i * distanceBetweenLines + rectF.left,
                 0f,
                 i * distanceBetweenLines + rectF.left,
-                rectF.height(),
-                paint
+                rectF.height() - LABELS.textSize,
+                LABELS
             )
+            val timeLabel = String.format("%05.2f", i * 24f / verticalLinesNumber)
+                .replace(",50", ":30")
+                .replace(",00", ":00")
+            canvas.drawText(timeLabel, i * distanceBetweenLines + rectF.left - TIME_LABELS_SHIFT, rectF.height(), LABELS)
         }
 
-        val horizontalLinesNumber = maxHeightInPoints.roundToInt()
+        val horizontalLinesNumber = horizontalLinesNumber.roundToInt()
         val verticalDistance = rectF.height() / horizontalLinesNumber
         for (i in 0 until horizontalLinesNumber) {
             canvas.drawLine(
@@ -341,7 +337,7 @@ class CustomView : View {
                 i * verticalDistance,
                 rectF.width(),
                 i * verticalDistance,
-                paint
+                LABELS
             )
         }
     }
