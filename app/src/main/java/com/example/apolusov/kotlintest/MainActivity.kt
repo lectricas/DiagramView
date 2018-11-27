@@ -16,9 +16,11 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
 
     lateinit var customView: CustomView
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         customView = CustomView(this, this, this, 10, 10)
         container.addView(customView)
 
