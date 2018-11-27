@@ -2,6 +2,7 @@ package com.example.apolusov.kotlintest
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.example.apolusov.kotlintest.diagram.DiagramBar
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 import kotlinx.android.synthetic.main.activity_main.*
@@ -23,8 +24,9 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
 
         customView.post {
             customView.setData((0..10).map { dayNumber ->
-                val day = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3, 0, hourNumber.toString()) }
-                DayItem(day, dayNumber)
+                val dayPoints = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3 + 2, 0, hourNumber.toString()) }
+                val dayBars = (0..23).map { hourNumber -> DiagramBar(hourNumber.toFloat(), r.nextFloat(), r.nextInt(3), hourNumber.toString()) }
+                DayItem(dayPoints, dayBars, dayNumber)
             })
         }
 
@@ -33,8 +35,9 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
     override fun onNewData(point: DayItem) {
         customView.post {
             customView.setData((0..10).map { dayNumber ->
-                val day = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3, 0, hourNumber.toString()) }
-                DayItem(day, dayNumber)
+                val dayPoints = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3 + 2, 0, hourNumber.toString()) }
+                val dayBars = (0..23).map { hourNumber -> DiagramBar(hourNumber.toFloat(), r.nextFloat(), r.nextInt(3), hourNumber.toString()) }
+                DayItem(dayPoints, dayBars, dayNumber)
             })
         }
     }

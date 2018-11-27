@@ -8,6 +8,7 @@ import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 class DayViewPort(
     val rectF: RectF,
     val points: List<DiagramPoint>,
+    val bars: List<DiagramBar>,
     val text: String
 ) {
     companion object {
@@ -32,6 +33,15 @@ class DayViewPort(
                         rectF.left
                     )
                 },
+                dayItem.bars.map {
+                    it.convert(
+                        maxViewWidthPoints,
+                        rectF.width(),
+                        maxViewHeightPoints,
+                        rectF.height(),
+                        rectF.left
+                    )
+                },
                 dayItem.dayNumber.toString()
             )
         }
@@ -43,11 +53,13 @@ class DayViewPort(
         rectF.left = sLeft + viewWidthInPixels / 2
         rectF.right = sRight + viewWidthInPixels / 2
         points.forEach { it.scale(factor, viewWidthInPixels) }
+        bars.forEach { it.scale(factor, viewWidthInPixels) }
     }
 
     fun offsetChildrenHorizontal(scrollBy: Float) {
         rectF.offset(scrollBy, 0f)
         points.forEach { it.offset(scrollBy) }
+        bars.forEach { it.offset(scrollBy) }
     }
 
 //    fun scaleVertically(factor: Float) {

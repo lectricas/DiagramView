@@ -6,6 +6,7 @@ import android.graphics.*
 import android.view.*
 import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
+import com.example.apolusov.kotlintest.diagram.DiagramBar
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 import timber.log.Timber
@@ -29,6 +30,8 @@ class CustomView : View {
         const val BEZIER_TENSION = 1f
         const val TOUCH_PRECISION = 20f
         const val ITEMS_LEFT_WHEN_LOAD = 5
+        const val BARS_WIDTH = 15
+        const val BAR_RADIUS = 15f
     }
 
     private var maxWidthInPoints = 0f
@@ -45,6 +48,25 @@ class CustomView : View {
 
     private val paint = Paint().apply {
         color = Color.WHITE
+        textSize = 50f
+    }
+
+    private val GREEN = Paint().apply {
+        color = Color.GREEN
+    }
+
+    private val CYAN = Paint().apply {
+        color = Color.CYAN
+        textSize = 50f
+    }
+
+    private val MAGENTA = Paint().apply {
+        color = Color.MAGENTA
+        textSize = 50f
+    }
+
+    private val YELLOW = Paint().apply {
+        color = Color.YELLOW
         textSize = 50f
     }
 
@@ -68,7 +90,7 @@ class CustomView : View {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
             valueAnimator.setFloatValues(-velocityX / VELOCITY_REDUCER, 0f)
             valueAnimator.start()
-            return true
+            return false
         }
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
@@ -178,7 +200,8 @@ class CustomView : View {
                 }
             }
         }
-        if (daysData.size - firstPosition <= firstPosition) {
+        if (daysData.size - firstPosition <= ITEMS_LEFT_WHEN_LOAD) {
+            Timber.d("$firstPosition")
             newDataListener.onNewData(daysData.last())
         }
         drawOnCacheCanvas()
@@ -239,18 +262,35 @@ class CustomView : View {
             bezierPath.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
         }
         cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        cacheCanvas.drawPath(bezierPath, bezierLinePaint)
         rectList.forEach { day ->
             drawPoints(day.points, cacheCanvas)
             drawGridAndTime(cacheCanvas, day.rectF)
+            drawBars(day.bars, cacheCanvas)
         }
-        cacheCanvas.drawPath(bezierPath, bezierLinePaint)
+
         //todo glow
+    }
+
+    private fun drawBars(points: List<DiagramBar>, canvas: Canvas) {
+        points.forEach {
+            val rectF = RectF(it.x - BARS_WIDTH, it.height, it.x + BARS_WIDTH, height + BAR_RADIUS)
+            val currentPaint = when(it.type) {
+                DiagramBar.TYPE_0 -> GREEN
+                DiagramBar.TYPE_1 -> CYAN
+                DiagramBar.TYPE_2 -> MAGENTA
+                DiagramBar.TYPE_3 -> YELLOW
+                else -> MAGENTA
+
+            }
+            canvas.drawRoundRect(rectF, BAR_RADIUS, BAR_RADIUS, currentPaint)
+        }
     }
 
     private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
         points.forEach {
-            canvas.drawCircle(it.x, it.y, 10f, paint)
-            canvas.drawText(it.text, it.x, it.y, paint)
+            canvas.drawCircle(it.x, it.y, 12f, paint)
+//            canvas.drawText(it.text, it.x, it.y, paint)
         }
     }
 
