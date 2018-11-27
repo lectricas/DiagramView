@@ -16,14 +16,5 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val manager = SimpleLayoutManager(this@MainActivity) {recyclerView.scrollState}
-//        val manager = LinearLayoutManager(this@MainActivity, RecyclerView.HORIZONTAL, true)
-
-        with(recyclerView) {
-            adapter = SimpleAdapter()
-            layoutManager = manager
-            addItemDecoration(DividerItemDecoration(this@MainActivity, DividerItemDecoration.HORIZONTAL))
-        }
     }
 }

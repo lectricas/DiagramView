@@ -6,22 +6,5 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/colorPrimary"
         tools:context=".MainActivity">
-
-    <com.example.apolusov.kotlintest.ZoomRecyclerView
-            android:background="@color/colorPrimaryDark"
-            android:id="@+id/recyclerView"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    <SeekBar
-            android:layout_margin="10dp"
-            android:id="@+id/seek"
-            android:max="5"
-            android:progress="1"
-            android:min="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
 </LinearLayout>
