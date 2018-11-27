@@ -3,6 +3,8 @@ package com.example.apolusov.kotlintest
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
+import android.os.Handler
+import android.os.Looper
 import android.view.*
 import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
@@ -14,6 +16,15 @@ import kotlin.math.roundToInt
 
 
 class CustomView : View {
+
+    private inner class ScrollWorker(val scrollBy: Float) : Runnable {
+        override fun run() {
+            scrollView(scrollBy)
+        }
+    }
+
+    private val scrollHandler = Handler(Looper.getMainLooper());
+    private var scrollWorker: Runnable? = null
 
     private var newDataListener: NewDataListener
     private var pointClickListener: PointClickListener
@@ -32,6 +43,7 @@ class CustomView : View {
         const val ITEMS_LEFT_WHEN_LOAD = 5
         const val BARS_WIDTH = 15
         const val BAR_RADIUS = 15f
+        const val SCROLL_DEBOUNCE = 5L
     }
 
     private var maxWidthInPoints = 0f
@@ -70,20 +82,23 @@ class CustomView : View {
         textSize = 50f
     }
 
-    val bezierLinePaint = Paint().apply {
+    private val bezierLinePaint = Paint().apply {
         color = Color.CYAN
         strokeWidth = 5f
         style = Paint.Style.STROKE
     }
 
-    val bezierPath = Path()
+    private val bezierPath = Path()
 
-    lateinit var bitmap: Bitmap
-    lateinit var cacheCanvas: Canvas
+    private lateinit var bitmap: Bitmap
+    private lateinit var cacheCanvas: Canvas
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            scrollView(distanceX)
+//            scrollView(distanceX)
+            scrollHandler.removeCallbacks(scrollWorker)
+            scrollWorker = ScrollWorker(distanceX)
+            scrollHandler.postDelayed(scrollWorker, SCROLL_DEBOUNCE)
             return true
         }
 
@@ -123,9 +138,12 @@ class CustomView : View {
         this.pointClickListener = pointClickListener
         maxWidthInPoints = defaultWidth.toFloat()
         maxHeightInPoints = defaultHeight.toFloat()
-
         valueAnimator.addUpdateListener {
-            scrollView(it.animatedValue as Float)
+            scrollHandler.removeCallbacks(scrollWorker)
+            scrollWorker = ScrollWorker(it.animatedValue as Float)
+            scrollHandler.postDelayed(scrollWorker, SCROLL_DEBOUNCE)
+//            scrollView(it.animatedValue as Float)
+
         }
     }
 
@@ -201,11 +219,10 @@ class CustomView : View {
             }
         }
         if (daysData.size - firstPosition <= ITEMS_LEFT_WHEN_LOAD) {
-            Timber.d("$firstPosition")
+            Timber.d("first position $firstPosition")
             newDataListener.onNewData(daysData.last())
         }
         drawOnCacheCanvas()
-        invalidate()
     }
 
     private fun offsetChildrenHorizontal(scrollBy: Float) {
@@ -231,7 +248,6 @@ class CustomView : View {
             it.scaleHorizontally(factor, viewWidthInPixels)
         }
         drawOnCacheCanvas()
-        invalidate()
     }
 
     fun setData(data: List<DayItem>) {
@@ -269,13 +285,15 @@ class CustomView : View {
             drawBars(day.bars, cacheCanvas)
         }
 
+        bitmap.prepareToDraw()
+        invalidate()
         //todo glow
     }
 
     private fun drawBars(points: List<DiagramBar>, canvas: Canvas) {
         points.forEach {
             val rectF = RectF(it.x - BARS_WIDTH, it.height, it.x + BARS_WIDTH, height + BAR_RADIUS)
-            val currentPaint = when(it.type) {
+            val currentPaint = when (it.type) {
                 DiagramBar.TYPE_0 -> GREEN
                 DiagramBar.TYPE_1 -> CYAN
                 DiagramBar.TYPE_2 -> MAGENTA

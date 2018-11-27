@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
         container.addView(customView)
 
         customView.post {
-            customView.setData((0..10).map { dayNumber ->
+            customView.setData((0..9).map { dayNumber ->
                 val dayPoints = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3 + 2, 0, hourNumber.toString()) }
                 val dayBars = (0..23).map { hourNumber -> DiagramBar(hourNumber.toFloat(), r.nextFloat(), r.nextInt(3), hourNumber.toString()) }
                 DayItem(dayPoints, dayBars, dayNumber)
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView
 
     override fun onNewData(point: DayItem) {
         customView.post {
-            customView.setData((0..10).map { dayNumber ->
+            customView.setData((0..9).map { dayNumber ->
                 val dayPoints = (0..23).map { hourNumber -> DiagramPoint(hourNumber.toFloat(), r.nextFloat() * 3 + 2, 0, hourNumber.toString()) }
                 val dayBars = (0..23).map { hourNumber -> DiagramBar(hourNumber.toFloat(), r.nextFloat(), r.nextInt(3), hourNumber.toString()) }
                 DayItem(dayPoints, dayBars, dayNumber)
