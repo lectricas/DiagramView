@@ -7,9 +7,7 @@ import com.firstlinesoftware.diabetus.diagram.DiagramPoint
 
 class DayViewPort(
     val rectF: RectF,
-    val points: List<DiagramPoint>,
-    val bars: List<DiagramBar>,
-    val text: String
+    val points: List<DiagramPoint>
 ) {
     companion object {
 
@@ -20,8 +18,6 @@ class DayViewPort(
             rectF: RectF,
             dayItem: DayItem
         ): DayViewPort {
-
-
             return DayViewPort(
                 rectF,
                 dayItem.points.map {
@@ -32,17 +28,7 @@ class DayViewPort(
                         rectF.height(),
                         rectF.left
                     )
-                },
-                dayItem.bars.map {
-                    it.convert(
-                        maxViewWidthPoints,
-                        rectF.width(),
-                        maxViewHeightPoints,
-                        rectF.height(),
-                        rectF.left
-                    )
-                },
-                dayItem.dayNumber.toString()
+                }
             )
         }
     }
@@ -53,19 +39,10 @@ class DayViewPort(
         rectF.left = sLeft + viewWidthInPixels / 2
         rectF.right = sRight + viewWidthInPixels / 2
         points.forEach { it.scale(factor, viewWidthInPixels) }
-        bars.forEach { it.scale(factor, viewWidthInPixels) }
     }
 
     fun offsetChildrenHorizontal(scrollBy: Float) {
         rectF.offset(scrollBy, 0f)
         points.forEach { it.offset(scrollBy) }
-        bars.forEach { it.offset(scrollBy) }
     }
-
-//    fun scaleVertically(factor: Float) {
-//        val sTop = (rectF.top - viewHeightInPixels / 2) * factor
-//        val sBottom = (rectF.bottom - viewHeightInPixels / 2) * factor
-//        rectF.top = sTop + viewHeightInPixels /2
-//        rectF.bottom = sBottom + viewHeightInPixels /2
-//    }
 }

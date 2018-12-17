@@ -5,27 +5,15 @@ import android.content.Context
 import android.graphics.*
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.content.ContextCompat
 import android.view.*
 import android.view.animation.DecelerateInterpolator
 import com.example.apolusov.kotlintest.diagram.DayViewPort
-import com.example.apolusov.kotlintest.diagram.DiagramBar
 import com.firstlinesoftware.diabetus.diagram.DayItem
 import com.firstlinesoftware.diabetus.diagram.DiagramPoint
-import timber.log.Timber
 import kotlin.math.roundToInt
 
 
 class CustomView : View {
-
-    private inner class ScrollWorker(val scrollBy: Float) : Runnable {
-        override fun run() {
-            scrollView(scrollBy)
-        }
-    }
-
-    private val scrollHandler = Handler(Looper.getMainLooper());
-    private var scrollWorker: Runnable? = null
 
     private var newDataListener: NewDataListener
     private var pointClickListener: PointClickListener
@@ -41,18 +29,9 @@ class CustomView : View {
         const val BEZIER_TENSION = 1f
         const val TOUCH_PRECISION = 20f
         const val ITEMS_LEFT_WHEN_LOAD = 5
-        const val BARS_WIDTH = 7
-        const val BAR_RADIUS = 15f
-        const val BAR_BOTTOM_MARGIN = 30f
-        const val SCROLL_DEBOUNCE = 5L
-        const val TIME_LABELS_SHIFT = 50
     }
 
     private var horizontalLinesNumber = 7f
-    private var viewWidthInPixels = 0f
-    private var viewHeightInPixels = 0f
-    private var otherMedsLineHeight = 0f
-
     private var daysData = listOf<DayItem>()
     private var rectList = mutableListOf<DayViewPort>()
     private var bezierPoints = listOf<PointF>()
@@ -62,11 +41,7 @@ class CustomView : View {
 
     private val LABELS = Paint().apply {
         color = Color.WHITE
-        textSize = 40f
-    }
-
-    private val OTHER_MEDS_LINE = Paint().apply {
-        style = Paint.Style.FILL
+        textSize = 30f
     }
 
     private val bezierLinePaint = Paint().apply {
@@ -82,10 +57,7 @@ class CustomView : View {
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-//            scrollView(distanceX)
-            scrollHandler.removeCallbacks(scrollWorker)
-            scrollWorker = ScrollWorker(distanceX)
-            scrollHandler.postDelayed(scrollWorker, SCROLL_DEBOUNCE)
+            scrollView(distanceX)
             return true
         }
 
@@ -121,31 +93,18 @@ class CustomView : View {
         scaleDetector = ScaleGestureDetector(context, scaleListener)
         this.newDataListener = newDataListener
         this.pointClickListener = pointClickListener
-        initPaintsAndSizes()
         valueAnimator.addUpdateListener {
-            scrollHandler.removeCallbacks(scrollWorker)
-            scrollWorker = ScrollWorker(it.animatedValue as Float)
-            scrollHandler.postDelayed(scrollWorker, SCROLL_DEBOUNCE)
-//            scrollView(it.animatedValue as Float)
-
+            scrollView(it.animatedValue as Float)
         }
-    }
-
-    fun initPaintsAndSizes() {
-        otherMedsLineHeight = resources.getDimension(R.dimen.other_meds_height)
-        OTHER_MEDS_LINE.color = ContextCompat.getColor(context, R.color.other_meds_line)
-        LABELS.textSize = resources.getDimension(R.dimen.time_labels_size)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        viewWidthInPixels = width.toFloat()
-        viewHeightInPixels = height.toFloat()
 
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         cacheCanvas = Canvas(bitmap)
         if (daysData.isNotEmpty()) {
-            val rectF = RectF(0f, 0f, viewWidthInPixels, viewHeightInPixels)
+            val rectF = RectF(0f, 0f, width.toFloat(), height.toFloat())
             val dayViewPort = DayViewPort.construct(rectF, daysData.first())
             rectList.add(dayViewPort)
             drawOnCacheCanvas()
@@ -168,7 +127,7 @@ class CustomView : View {
         if (dx > 0) {
             while (scrolled < dx) {
                 val rightView = rectList.last().rectF
-                val hangingRight = Math.max(rightView.right - viewWidthInPixels, 0f)
+                val hangingRight = Math.max(rightView.right - width.toFloat(), 0f)
                 val scrollBy = -Math.min(dx - scrolled, hangingRight)
                 scrolled -= scrollBy
                 offsetChildrenHorizontal(scrollBy)
@@ -209,7 +168,6 @@ class CustomView : View {
             }
         }
         if (daysData.size - firstPosition <= ITEMS_LEFT_WHEN_LOAD) {
-            Timber.d("first position $firstPosition")
             newDataListener.onNewData(daysData.last())
         }
         drawOnCacheCanvas()
@@ -235,7 +193,7 @@ class CustomView : View {
 
     fun scaleView(factor: Float) {
         rectList.forEach {
-            it.scaleHorizontally(factor, viewWidthInPixels)
+            it.scaleHorizontally(factor, width.toFloat())
         }
         drawOnCacheCanvas()
     }
@@ -251,6 +209,17 @@ class CustomView : View {
     }
 
     private fun drawOnCacheCanvas() {
+        cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR) //clear
+        drawBezier()
+        rectList.forEach { day ->
+            drawGrid(day.rectF)
+            drawPoints(day.points)
+        }
+        invalidate()
+    }
+
+    //convert points, so bezier will go through them
+    private fun drawBezier() {
         bezierPoints = rectList.flatMap { day -> day.points.map { point -> PointF(point.x, point.y) } }
         bezierPath.reset()
         bezierPath.moveTo(bezierPoints.first().x, bezierPoints.first().y)
@@ -267,44 +236,17 @@ class CustomView : View {
             val cp2y = p2.y - (p3.y - p1.y) / 6 * BEZIER_TENSION
             bezierPath.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
         }
-        cacheCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR) //clear
         cacheCanvas.drawPath(bezierPath, bezierLinePaint)
-        rectList.forEach { day ->
-            drawGridAndTime(cacheCanvas, day.rectF)
-            drawPoints(day.points, cacheCanvas)
-            drawBars(day.bars, cacheCanvas)
-        }
-
-        bitmap.prepareToDraw()
-        invalidate()
-        //todo glow
     }
 
-    private fun drawBars(points: List<DiagramBar>, canvas: Canvas) {
+    private fun drawPoints(points: List<DiagramPoint>) {
         points.forEach {
-            val rectF = RectF(it.x - BARS_WIDTH, it.height - 50, it.x + BARS_WIDTH, height - 50f )
-            val currentPaint = when (it.type) {
-                DiagramBar.TYPE_0 -> LABELS
-                DiagramBar.TYPE_1 -> LABELS
-                DiagramBar.TYPE_2 -> LABELS
-                DiagramBar.TYPE_3 -> LABELS
-                else -> LABELS
-
-            }
-            canvas.drawRoundRect(rectF, BAR_RADIUS, BAR_RADIUS, currentPaint)
-        }
-
-        canvas.drawRect(0f, height - otherMedsLineHeight - LABELS.textSize, width + 0f, height - LABELS.textSize, OTHER_MEDS_LINE)
-    }
-
-    private fun drawPoints(points: List<DiagramPoint>, canvas: Canvas) {
-        points.forEach {
-            canvas.drawCircle(it.x, it.y, 12f, LABELS)
-            canvas.drawText(it.text, it.x, it.y, LABELS)
+            cacheCanvas.drawCircle(it.x, it.y, 12f, LABELS)
+            cacheCanvas.drawText(it.text, it.x, it.y, LABELS)
         }
     }
 
-    private fun drawGridAndTime(canvas: Canvas, rectF: RectF) {
+    private fun drawGrid(rectF: RectF) {
         val verticalLinesNumber =
             when (completeScaleFactor) {
                 in 0..1 -> 8
@@ -316,23 +258,19 @@ class CustomView : View {
 
         val distanceBetweenLines = rectF.width() / verticalLinesNumber
         for (i in 0 until verticalLinesNumber) {
-            canvas.drawLine(
+            cacheCanvas.drawLine(
                 i * distanceBetweenLines + rectF.left,
                 0f,
                 i * distanceBetweenLines + rectF.left,
-                rectF.height() - LABELS.textSize,
+                rectF.height(),
                 LABELS
             )
-            val timeLabel = String.format("%05.2f", i * 24f / verticalLinesNumber)
-                .replace(",50", ":30")
-                .replace(",00", ":00")
-            canvas.drawText(timeLabel, i * distanceBetweenLines + rectF.left - TIME_LABELS_SHIFT, rectF.height(), LABELS)
         }
 
         val horizontalLinesNumber = horizontalLinesNumber.roundToInt()
         val verticalDistance = rectF.height() / horizontalLinesNumber
         for (i in 0 until horizontalLinesNumber) {
-            canvas.drawLine(
+            cacheCanvas.drawLine(
                 0f,
                 i * verticalDistance,
                 rectF.width(),
