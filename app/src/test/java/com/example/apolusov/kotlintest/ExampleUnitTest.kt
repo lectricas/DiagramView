@@ -15,6 +15,8 @@ class ExampleUnitTest {
     fun addition_isCorrect() {
         println(String.format("%05.2f", 11.5f).replace(",50", ":30"))
 
-//        println(java.text.DecimalFormat("#.00").format(500.401))
+        for (i in 0 until 3) {
+            println(i)
+        }
     }
 }
