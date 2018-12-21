@@ -1,6 +1,13 @@
 package com.example.apolusov.kotlintest.diagram
 
-class DataPoint(
+import java.util.*
+
+data class DataPoint(
     val valueX: Int,
     val valueY: Int
-)
+) {
+
+    override fun toString(): String {
+        return "[$valueX, $valueY]"
+    }
+}

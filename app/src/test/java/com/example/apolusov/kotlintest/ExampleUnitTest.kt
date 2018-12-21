@@ -1,9 +1,11 @@
 package com.example.apolusov.kotlintest
 
+import com.example.apolusov.kotlintest.diagram.DataPoint
 import org.junit.Test
 
 import org.junit.Assert.*
 import java.text.DecimalFormat
+import java.util.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -11,12 +13,19 @@ import java.text.DecimalFormat
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ExampleUnitTest {
+
+    val r = Random()
+
     @Test
     fun addition_isCorrect() {
-        println(String.format("%05.2f", 11.5f).replace(",50", ":30"))
+        val maxWidth = 1080
+        val maxHeight = 1536
 
-        for (i in 0 until 3) {
-            println(i)
+        val data = (1..20).map {
+            println(it)
+            DataPoint(maxWidth / 2 * it, r.nextInt(maxHeight))
         }
+
+        print(data)
     }
 }

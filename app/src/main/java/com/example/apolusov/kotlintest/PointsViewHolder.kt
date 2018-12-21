@@ -1,10 +1,23 @@
 package com.example.apolusov.kotlintest
 
-import com.example.apolusov.kotlintest.diagram.PixelPoint
+import android.graphics.RectF
+import java.util.*
 
 class PointsViewHolder(
-    val left: Float,
-    val top: Float,
-    val right: Float,
-    val bottom: Float
-)
+    var left: Float,
+    var top: Float,
+    var right: Float,
+    var bottom: Float,
+    val calendar: Calendar
+) {
+
+    fun middleX() = (left + right) * 0.5f
+    fun middleY() = (top + bottom) * 0.5f
+
+    fun offsetX(scrollBy: Float) {
+        left += scrollBy
+        right += scrollBy
+        val rectF = RectF()
+        rectF.centerX()
+    }
+}

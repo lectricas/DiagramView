@@ -10,34 +10,47 @@ import timber.log.Timber
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView.PointClickListener {
+class MainActivity : AppCompatActivity(), CustomView.NewDataListener, CustomView.PointClickListener, CustomViewTest.ViewEventListener {
 
     val r = Random()
 
-    lateinit var customView: CustomView
+//    lateinit var customView: CustomView
+    lateinit var customView: CustomViewTest
+    val maxWidth = 1080
+    val maxHeight = 1536
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        customView = CustomView(this, this, this)
+//        customView = CustomView(this, this, this)
+        customView = CustomViewTest(this, this)
         container.addView(customView)
+//
+//        customView.post {
+//            customView.setData((0..9).map { dayNumber ->
+//                val dayPoints = listOf(DiagramPoint(12f, r.nextInt(250) + 250f, 0, "12f"))
+//                DayItem(dayPoints)
+//            })
+//        }
 
-        customView.post {
-            customView.setData((0..9).map { dayNumber ->
-                val dayPoints = listOf(DiagramPoint(12f, r.nextInt(250) + 250f, 0, "12f"))
-                DayItem(dayPoints)
-            })
+        val data = (1..10).map {
+            DataPoint(maxWidth / 2 * it, r.nextInt(100) + 700)
         }
 
-        val test = CustomViewTest(this)
-        val maxWidth = 10
-        val maxHeight = 5
+        customView.post {
+            customView.setData(data)
+        }
+    }
 
+    override fun onNewData() {
+        val data = (11..20).map {
+            DataPoint(maxWidth / 2 * it, r.nextInt(100) + 700)
+        }
 
-        val data = listOf(5,15,25,35,45,55,65,75,85,95)
-            .map { DataPoint(it, r.nextInt(2) + 2) }
-        test.setData(data)
+        customView.post {
+            customView.addData(data)
+        }
     }
 
     override fun onNewData(point: DayItem) {
