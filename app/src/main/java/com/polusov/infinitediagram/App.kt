@@ -1,4 +1,4 @@
-package com.example.apolusov.kotlintest
+package com.polusov.infinitediagram
 
 import android.app.Application
 import timber.log.Timber

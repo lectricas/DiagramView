@@ -8,12 +8,9 @@
         android:gravity="center"
         tools:context=".MainActivity">
 
-    <FrameLayout
-            android:background="@drawable/bg_main_screen"
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
+    <androidx.appcompat.widget.AppCompatEditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
 </LinearLayout>
 
 
