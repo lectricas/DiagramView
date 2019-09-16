@@ -30,3 +30,15 @@ fun View.hideKeyboard() {
         function.invoke()
     }
 }
+
+var View.visible: Boolean
+    get() {
+        return this.visibility == View.VISIBLE
+    }
+    set(value) {
+        if (value) {
+            this.visibility = View.VISIBLE
+        } else {
+            this.visibility = View.GONE
+        }
+    }

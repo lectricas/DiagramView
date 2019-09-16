@@ -13,62 +13,99 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import timber.log.Timber
+import java.util.Random
+import kotlin.Int.Companion
 
 class InfiniteDiagramView(context: Context): View(context) {
 
+    companion object {
+        private val SWIPE_THRESHOLD = 150
+        private val SWIPE_MIN_DISTANCE = 120
+        private val SWIPE_MAX_OFF_PATH = 250
+        private val SWIPE_THRESHOLD_VELOCITY = 200
+    }
+
+    var rnd = Random()
     private val data = mutableListOf<RectView>()
 
-    private val scroller = Scroller(context, DecelerateInterpolator())
+    var weScrolled = 0f
 
     private var viewWidthInPixels = 0f
     private var viewHeightInPixels = 0f
 
+    private val flinger = Flinger()
+
     private val detector = GestureDetector(context, object: SimpleOnGestureListener(){
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-//            scrollView(distanceX)
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+
+//            if ((e1.action == MotionEvent.ACTION_DOWN) &&
+//                (e2.action == MotionEvent.ACTION_MOVE) &&
+//                Math.abs(distanceX) > SWIPE_THRESHOLD) {
+//
+//                return true
+//            }
+            scrollView(distanceX)
             return true
         }
 
-        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             Timber.d("OnFling $velocityX")
-            scroller.fling(
-                0,
-                0,
-                velocityX.toInt(),
-                0,
-                -5000,
-                5000,
-                0,
-                0
-            )
+            flinger.start(velocityX.toInt())
 
-            Timber.d("duration ${scroller.duration}")
-
-            val a = ValueAnimator.ofFloat(scroller.duration.toFloat())
-            var intA = 0
-            a.addUpdateListener {
-                if (scroller.computeScrollOffset()) {
-                    intA += scroller.currX
-                    Timber.d("scroller offset = ${scroller.currX} + ${it.animatedValue} + summ = $intA")
-                }
-            }
-            a.start()
-
-
-//            invalidate()
             return true
         }
 
         override fun onDown(e: MotionEvent?): Boolean {
-            if (!scroller.isFinished) {
-                scroller.forceFinished(true)
-            }
+            flinger.finish()
             return true
         }
     })
 
+    inner class Flinger: Runnable {
+        private val scroller = Scroller(context)
+        private var lastX = 0
+
+        fun start(velocity: Int) { //todo не работает вот эта хуйня!!!
+            Timber.d("startX = ${data.first().rectF.left} width = ${width}")
+            scroller.fling(
+                weScrolled.toInt(),
+                0,
+                velocity,
+                0,
+                Int.MIN_VALUE,
+                Int.MAX_VALUE,
+                0,
+                0
+            )
+            post(this)
+        }
+        override fun run() {
+            if (scroller.isFinished) {
+                return
+            }
+            val more = scroller.computeScrollOffset()
+            val x = scroller.currX
+            val diff = lastX - x
+            if (diff != 0) {
+                scrollView(diff.toFloat())
+                lastX = x
+            }
+
+            if (more) {
+                post(this)
+            }
+        }
+
+        fun finish() {
+            if (!scroller.isFinished) {
+                scroller.forceFinished(true);
+            }
+        }
+    }
+
     private fun scrollView(dx: Float) {
-        Timber.d(dx.toString())
+        this.weScrolled -= dx
+        Timber.d("scrollView: $dx")
         var scrolled = 0f
         if (dx > 0) {
             while (scrolled < dx) {
@@ -82,8 +119,7 @@ class InfiniteDiagramView(context: Context): View(context) {
                     val left = rightRect.right
                     val right = left + rightRect.width()
                     val rect = RectF(left, rightRect.top, right, rightRect.bottom)
-                    data.add(RectView(rect, rightView.data.inc()))
-
+                    data.add(RectView(rect, rightView.data.inc(), randomColor()))
                     if (data.size > 2) {
                         data.removeAt(0)
                     }
@@ -104,7 +140,7 @@ class InfiniteDiagramView(context: Context): View(context) {
                     val right = leftRect.left
                     val left = right - leftRect.width()
                     val rect = RectF(left, leftRect.top, right, leftRect.bottom)
-                    data.add(0, RectView(rect, leftView.data.dec()))
+                    data.add(0, RectView(rect, leftView.data.dec(), randomColor()))
                     if (data.size > 2) {
                         data.removeAt(data.lastIndex)
                     }
@@ -135,11 +171,12 @@ class InfiniteDiagramView(context: Context): View(context) {
         super.onSizeChanged(w, h, oldw, oldh)
         viewWidthInPixels = w.toFloat()
         viewHeightInPixels = h.toFloat()
-        data.add(RectView(RectF(0f, 0f, w.toFloat(), h.toFloat()), 1))
+        data.add(RectView(RectF(0f, 0f, w.toFloat(), h.toFloat()), 1, randomColor()))
     }
 
     override fun onDraw(canvas: Canvas) {
         data.forEach {
+            p.color = it.color
             canvas.drawRect(it.rectF, p)
             canvas.drawText(it.data.toString(), it.rectF.centerX(), it.rectF.centerY(), textP)
         }
@@ -148,5 +185,9 @@ class InfiniteDiagramView(context: Context): View(context) {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         detector.onTouchEvent(event)
         return true
+    }
+
+    private fun randomColor(): Int {
+        return Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256))
     }
 }
