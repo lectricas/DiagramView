@@ -1,10 +1,14 @@
-package com.polusov.infinitediagram.pmstuff
+package com.polusov.infinitediagram.tests.statemachine
 
 import me.dmdev.rxpm.PresentationModel
 
 class MainActivityPm : PresentationModel() {
 
-    val stateMachine = State<SandwichState>(SandwichList(listOf()))
+    val stateMachine = State<SandwichState>(
+        SandwichList(
+            listOf()
+        )
+    )
     val stateAction = Action<Act>()
 
     override fun onCreate() {
@@ -36,19 +40,26 @@ class MainActivityPm : PresentationModel() {
         WRAP
     }
 
-    class SandwichList(private val sandwiches: List<Sandwich>) : SandwichState {
+    class SandwichList(private val sandwiches: List<Sandwich>) :
+        SandwichState {
         override fun consumeAction(action: Act): SandwichState {
             return when (action) {
-                is Act.AddSandwichClicked -> AddSandwich(sandwiches)
+                is Act.AddSandwichClicked -> AddSandwich(
+                    sandwiches
+                )
                 else -> throw IllegalStateException("Invalid action $action passed to state $this")
             }
         }
     }
 
-    class AddSandwich(private val sandwiches: List<Sandwich>) : SandwichState {
+    class AddSandwich(private val sandwiches: List<Sandwich>) :
+        SandwichState {
         override fun consumeAction(action: Act): SandwichState {
             return when (action) {
-                is Act.SandwichTypeSelected -> NameSandwich(sandwiches, action.type)
+                is Act.SandwichTypeSelected -> NameSandwich(
+                    sandwiches,
+                    action.type
+                )
                 is Act.PredefinedSandwichSelected -> {
                     SandwichList(sandwiches + action.sandwich)
                 }
@@ -65,7 +76,10 @@ class MainActivityPm : PresentationModel() {
         override fun consumeAction(action: Act): SandwichState {
             return when (action) {
                 is Act.SubmitSandwichClicked -> {
-                    val newSandwich = Sandwich(action.sandwichName, newSandwichType)
+                    val newSandwich = Sandwich(
+                        action.sandwichName,
+                        newSandwichType
+                    )
                     SandwichList(sandwiches + newSandwich)
                 }
                 else -> throw IllegalStateException("Invalid action $action passed to state $this")

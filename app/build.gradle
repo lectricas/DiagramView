@@ -52,4 +52,5 @@ dependencies {
     implementation 'me.dmdev.rxpm:rxpm:1.2.5'
     implementation 'com.jakewharton.rxbinding2:rxbinding-kotlin:2.2.0'
     implementation 'com.jakewharton.rxbinding2:rxbinding-support-v4-kotlin:2.2.0'
+    implementation 'com.github.tbruyelle:rxpermissions:0.10.2'
 }
