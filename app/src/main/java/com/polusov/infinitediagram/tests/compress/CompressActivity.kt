@@ -1,36 +1,45 @@
 package com.polusov.infinitediagram.tests.compress
 
 import android.Manifest
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.core.content.FileProvider
-import com.google.android.material.snackbar.Snackbar
 import com.polusov.infinitediagram.BuildConfig
-import com.polusov.infinitediagram.R
 import com.tbruyelle.rxpermissions2.RxPermissions
-import kotlinx.android.synthetic.main.activity_compress.*
+import kotlinx.android.synthetic.main.activity_compress.pdfFromGallery
+import kotlinx.android.synthetic.main.activity_compress.photoFromCamera
+import kotlinx.android.synthetic.main.activity_compress.photoFromGallery
+import kotlinx.android.synthetic.main.activity_compress.showFile
 import me.dmdev.rxpm.base.PmSupportActivity
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import android.database.Cursor
+import com.polusov.infinitediagram.R
 
+class CompressActivity : PmSupportActivity<CompressPm>() {
 
-class CompressActivity: PmSupportActivity<CompressPm>() {
-
-    lateinit var filePath: String
-
+    //    lateinit var compressedFile: File
+//    lateinit var originalFile: File
+//
     companion object {
-        const val REQUEST_TAKE_PHOTO = 500
+
+        //        const val REQUEST_TAKE_PHOTO = 500
 //        const val AUTHORITY = "com.polusov.infinitediagram.fileprovider"
+//        private const val MAX_IMAGE_SIZE = 1024000
         private val FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".module.fileprovider"
     }
 
     lateinit var rxPermission: RxPermissions
+
+    lateinit var uri: Uri
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,107 +58,80 @@ class CompressActivity: PmSupportActivity<CompressPm>() {
         photoFromCamera.setOnClickListener {
             rxPermission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .subscribe {
-                    if (it) {
-                        dispatchTakePictureIntent()
-                    } else {
-                        Snackbar.make(container, "Please grant", 1000).show()
-                    }
+                    startActivityForResult(takePicture(), 3)
                 }
-
         }
     }
 
-    override fun onBindPresentationModel(pm: CompressPm) {
-
-    }
+    override fun onBindPresentationModel(pm: CompressPm) {}
 
     override fun providePresentationModel(): CompressPm {
         return CompressPm()
     }
 
-    fun fromGallery(): Intent {
+    private fun fromGallery(): Intent {
         val intent = Intent()
         intent.type = "image/*"
         intent.action = Intent.ACTION_GET_CONTENT
         return intent
     }
 
-    fun pdfFromGallery(): Intent {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
+    private fun pdfFromGallery(): Intent {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "application/pdf"
         return intent
     }
 
-    private fun dispatchTakePictureIntent() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            val photoFile = createImageFile()
-            photoFile.also {
-                val photoURI: Uri = FileProvider.getUriForFile(this@CompressActivity, FILE_PROVIDER_AUTHORITY, it)
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO)
-            }
-        }
+    private fun takePicture(): Intent {
+        val photoURI: Uri =
+            FileProvider.getUriForFile(this@CompressActivity, FILE_PROVIDER_AUTHORITY, createImageFile())
+        uri = photoURI
+        return Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
     }
 
     private fun createImageFile(): File {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmm").format(Date())
         val storageDir = File(Environment.getExternalStorageDirectory(), "/Pictures/InfiniteView/")
-        return File(storageDir,"JPEG_${timeStamp}_.jpg").apply {
-            filePath = absolutePath
-            Timber.d("absolutePath $absoluteFile")
-        }
-    }
-
-    private fun setPic() {
-        // Get the dimensions of the View
-        val targetW: Int = imageView.width
-        val targetH: Int = imageView.height
-
-        val bmOptions = BitmapFactory.Options().apply {
-            // Get the dimensions of the bitmap
-            inJustDecodeBounds = true
-
-            val photoW: Int = outWidth
-            val photoH: Int = outHeight
-
-            // Determine how much to scale down the image
-            val scaleFactor: Int = Math.min(photoW / targetW, photoH / targetH)
-
-            // Decode the image file into a Bitmap sized to fill the View
-            inJustDecodeBounds = false
-            inSampleSize = scaleFactor
-            inPurgeable = true
-        }
-        BitmapFactory.decodeFile(filePath, bmOptions)?.also { bitmap ->
-            imageView.setImageBitmap(bitmap)
-        }
+        return File(storageDir, "${timeStamp}.jpg")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        Timber.d(intentToString(data))
-        Timber.d("request = $requestCode result = $resultCode")
-        setPic()
-    }
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                1, 2 -> {
+                    val path = FileUtils.getPath(this, data!!.data!!)
+                    Timber.d("path = $path")
+//                    uri =
+                }
+                3 -> {
+                    //do nothing
+                }
+                else -> {
 
-    private fun intentToString(intent: Intent?): String {
-        if (intent == null)
-            return ""
-
-        val stringBuilder = StringBuilder("action: ")
-            .append(intent.action)
-            .append(" data: ")
-            .append(intent.dataString)
-            .append(" extras: ")
-
-        intent.extras?.apply {
-            for (key in keySet()) {
-                stringBuilder.append(key).append("=").append(intent.extras!!.get(key)).append(" ")
+                }
             }
         }
-
-        return stringBuilder.toString()
+//        showFile.text = uri.toString()
+//        openFile(uri)
     }
 
+    private fun openFile(url: Uri) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (url.path.contains(".pdf")) {
+                intent.setDataAndType(uri, "application/pdf")
+            } else if (url.path.contains(".jpg") || url.path.contains(".jpeg")) {
+                intent.setDataAndType(uri, "image/jpeg")
+            }
+
+            Timber.d("uri = $uri")
+
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No application found which can open the file", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
