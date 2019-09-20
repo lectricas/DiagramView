@@ -1,33 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:id="@+id/container"
-              android:layout_width="match_parent"
-              android:gravity="center_horizontal"
-              android:layout_height="match_parent">
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
 
     <Button
-            android:text="PHOTO"
-            android:id="@+id/photoFromGallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        android:id="@+id/photoFromGallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PHOTO" />
 
     <Button
-            android:text="PDF"
-            android:id="@+id/pdfFromGallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        android:id="@+id/pdfFromGallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PDF" />
 
     <Button
-            android:text="PhotoFromCamera"
-            android:id="@+id/photoFromCamera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+        android:id="@+id/photoFromCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PhotoFromCamera" />
+
+    <Button
+        android:id="@+id/showFile"
+        android:text="SHOWFILE"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 
     <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/imageView"
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp"/>
-
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>
