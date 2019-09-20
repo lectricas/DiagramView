@@ -9,14 +9,16 @@ import android.graphics.RectF
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
+import androidx.core.view.ScaleGestureDetectorCompat
 import timber.log.Timber
 import java.util.Random
 import kotlin.Int.Companion
 
-class InfiniteDiagramView(context: Context): View(context) {
+class InfiniteDiagramView(context: Context) : View(context) {
 
     companion object {
         private val SWIPE_THRESHOLD = 150
@@ -35,15 +37,8 @@ class InfiniteDiagramView(context: Context): View(context) {
 
     private val flinger = Flinger()
 
-    private val detector = GestureDetector(context, object: SimpleOnGestureListener(){
+    private val detector = GestureDetector(context, object : SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-
-//            if ((e1.action == MotionEvent.ACTION_DOWN) &&
-//                (e2.action == MotionEvent.ACTION_MOVE) &&
-//                Math.abs(distanceX) > SWIPE_THRESHOLD) {
-//
-//                return true
-//            }
             scrollView(distanceX)
             return true
         }
@@ -61,11 +56,20 @@ class InfiniteDiagramView(context: Context): View(context) {
         }
     })
 
-    inner class Flinger: Runnable {
+    private val scaler = ScaleGestureDetector(context, ScaleListener())
+
+    inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            Timber.d("scaleFactor ${detector.scaleFactor}")
+            return true
+        }
+    }
+
+    inner class Flinger : Runnable {
         private val scroller = Scroller(context)
         private var lastX = 0
 
-        fun start(velocity: Int) { //todo не работает вот эта хуйня!!!
+        fun start(velocity: Int) {
             Timber.d("startX = ${data.first().rectF.left} width = ${width}")
             scroller.fling(
                 weScrolled.toInt(),
@@ -79,6 +83,7 @@ class InfiniteDiagramView(context: Context): View(context) {
             )
             post(this)
         }
+
         override fun run() {
             if (scroller.isFinished) {
                 return
@@ -127,11 +132,10 @@ class InfiniteDiagramView(context: Context): View(context) {
                     break
                 }
             }
-        }
-        else if (dx < 0) {
+        } else if (dx < 0) {
             while (scrolled > dx) {
                 val leftView = data.first()
-                val leftRect= leftView.rectF
+                val leftRect = leftView.rectF
                 val hangingLeft = Math.max(-leftRect.left, 0f)
                 val scrollBy = Math.min(scrolled - dx, hangingLeft)
                 scrolled -= scrollBy
@@ -183,7 +187,11 @@ class InfiniteDiagramView(context: Context): View(context) {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        detector.onTouchEvent(event)
+        if (scaler.onTouchEvent(event)) {
+            return true
+        } else {
+            detector.onTouchEvent(event)
+        }
         return true
     }
 
