@@ -11,54 +11,49 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.polusov.infinitediagram.BuildConfig
+import com.polusov.infinitediagram.R
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.activity_compress.pdfFromGallery
 import kotlinx.android.synthetic.main.activity_compress.photoFromCamera
 import kotlinx.android.synthetic.main.activity_compress.photoFromGallery
-import kotlinx.android.synthetic.main.activity_compress.showFile
 import me.dmdev.rxpm.base.PmSupportActivity
-import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
-import android.database.Cursor
-import com.polusov.infinitediagram.R
 
 class CompressActivity : PmSupportActivity<CompressPm>() {
 
-    //    lateinit var compressedFile: File
-//    lateinit var originalFile: File
-//
     companion object {
-
-        //        const val REQUEST_TAKE_PHOTO = 500
-//        const val AUTHORITY = "com.polusov.infinitediagram.fileprovider"
-//        private const val MAX_IMAGE_SIZE = 1024000
+        const val PDF = 1
+        const val GALLERY = 2
+        const val PHOTO = 3
         private val FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".module.fileprovider"
     }
 
     lateinit var rxPermission: RxPermissions
 
-    lateinit var uri: Uri
+    lateinit var filePath: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_compress)
-        Timber.d("AppStarts")
         rxPermission = RxPermissions(this)
 
+
         photoFromGallery.setOnClickListener {
-            startActivityForResult(fromGallery(), 1)
+            startActivityForResult(fromGallery(), GALLERY)
         }
 
         pdfFromGallery.setOnClickListener {
-            startActivityForResult(pdfFromGallery(), 2)
+            startActivityForResult(pdfFromGallery(), PDF)
         }
 
         photoFromCamera.setOnClickListener {
             rxPermission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .subscribe {
-                    startActivityForResult(takePicture(), 3)
+                    startActivityForResult(takePicture(), PHOTO)
                 }
         }
     }
@@ -83,52 +78,69 @@ class CompressActivity : PmSupportActivity<CompressPm>() {
     }
 
     private fun takePicture(): Intent {
-        val photoURI: Uri =
-            FileProvider.getUriForFile(this@CompressActivity, FILE_PROVIDER_AUTHORITY, createImageFile())
-        uri = photoURI
-        return Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+        val photoURI: Uri = FileProvider.getUriForFile(
+            this@CompressActivity,
+            FILE_PROVIDER_AUTHORITY,
+            createImageFile("jpg")
+        )
+        return Intent(MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
     }
 
-    private fun createImageFile(): File {
+    private fun createImageFile(extension: String): File {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmm").format(Date())
         val storageDir = File(Environment.getExternalStorageDirectory(), "/Pictures/InfiniteView/")
-        return File(storageDir, "${timeStamp}.jpg")
+        return File(storageDir, "${timeStamp}.$extension").apply {
+            filePath = absolutePath
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
-                1, 2 -> {
-                    val path = FileUtils.getPath(this, data!!.data!!)
-                    Timber.d("path = $path")
-//                    uri =
+                GALLERY -> {
+                    val inputStream = contentResolver.openInputStream(data!!.data!!)
+                    copyStreamToFile(inputStream, createImageFile("jpg"))
                 }
-                3 -> {
-                    //do nothing
+                PDF -> {
+                    val inputStream = contentResolver.openInputStream(data!!.data!!)
+                    copyStreamToFile(inputStream, createImageFile("pdf"))
                 }
-                else -> {
+                PHOTO -> {
 
                 }
             }
+            openFile(File(filePath))
         }
-//        showFile.text = uri.toString()
-//        openFile(uri)
     }
 
-    private fun openFile(url: Uri) {
+    private fun copyStreamToFile(inputStream: InputStream, outputFile: File): File {
+        inputStream.use { input ->
+            val outputStream = FileOutputStream(outputFile)
+            outputStream.use { output ->
+                val buffer = ByteArray(4 * 1024) // buffer size
+                while (true) {
+                    val byteCount = input.read(buffer)
+                    if (byteCount < 0) break
+                    output.write(buffer, 0, byteCount)
+                }
+                output.flush()
+            }
+        }
+        return outputFile
+    }
+
+    private fun openFile(file: File) {
+        val fileUri = FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, file)
         try {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            if (url.path.contains(".pdf")) {
-                intent.setDataAndType(uri, "application/pdf")
-            } else if (url.path.contains(".jpg") || url.path.contains(".jpeg")) {
-                intent.setDataAndType(uri, "image/jpeg")
+            if (file.absolutePath.contains(".pdf")) {
+                intent.setDataAndType(fileUri, "application/pdf")
+            } else if (file.absolutePath.contains(".jpg") || file.absolutePath.contains(".jpeg")) {
+                intent.setDataAndType(fileUri, "image/jpeg")
             }
 
-            Timber.d("uri = $uri")
-
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No application found which can open the file", Toast.LENGTH_SHORT).show()
