@@ -11,8 +11,10 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.polusov.infinitediagram.BuildConfig
+import com.polusov.infinitediagram.diagram.DiagramActivity
 import com.polusov.infinitediagram.R
 import com.tbruyelle.rxpermissions2.RxPermissions
+import kotlinx.android.synthetic.main.activity_compress.diagramActivity
 import kotlinx.android.synthetic.main.activity_compress.pdfFromGallery
 import kotlinx.android.synthetic.main.activity_compress.photoFromCamera
 import kotlinx.android.synthetic.main.activity_compress.photoFromGallery
@@ -55,6 +57,10 @@ class CompressActivity : PmSupportActivity<CompressPm>() {
                 .subscribe {
                     startActivityForResult(takePicture(), PHOTO)
                 }
+        }
+
+        diagramActivity.setOnClickListener {
+            startActivity(Intent(this, DiagramActivity::class.java))
         }
     }
 

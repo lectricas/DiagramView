@@ -13,7 +13,7 @@ import com.polusov.infinitediagram.tests.statemachine.MainActivityPm.Sandwich
 import com.polusov.infinitediagram.tests.statemachine.MainActivityPm.SandwichList
 import com.polusov.infinitediagram.tests.statemachine.MainActivityPm.SandwichType.GRINDER
 import com.polusov.infinitediagram.tests.statemachine.MainActivityPm.SandwichType.WRAP
-import com.polusov.visible
+import com.polusov.infinitediagram.visible
 import kotlinx.android.synthetic.main.activity_pm.addSandwichClicked
 import kotlinx.android.synthetic.main.activity_pm.newState
 import kotlinx.android.synthetic.main.activity_pm.predefinedSandwichSelected

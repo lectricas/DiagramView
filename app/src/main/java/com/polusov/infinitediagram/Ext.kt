@@ -1,4 +1,4 @@
-package com.polusov
+package com.polusov.infinitediagram
 
 import android.content.Context
 import android.view.View
