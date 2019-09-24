@@ -11,14 +11,15 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.polusov.infinitediagram.BuildConfig
-import com.polusov.infinitediagram.diagram.DiagramActivity
 import com.polusov.infinitediagram.R
+import com.polusov.infinitediagram.diagram.DiagramActivity
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.activity_compress.diagramActivity
 import kotlinx.android.synthetic.main.activity_compress.pdfFromGallery
 import kotlinx.android.synthetic.main.activity_compress.photoFromCamera
 import kotlinx.android.synthetic.main.activity_compress.photoFromGallery
 import me.dmdev.rxpm.base.PmSupportActivity
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -45,11 +46,17 @@ class CompressActivity : PmSupportActivity<CompressPm>() {
 
 
         photoFromGallery.setOnClickListener {
-            startActivityForResult(fromGallery(), GALLERY)
+            rxPermission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe {
+                    startActivityForResult(fromGallery(), GALLERY)
+                }
         }
 
         pdfFromGallery.setOnClickListener {
-            startActivityForResult(pdfFromGallery(), PDF)
+            rxPermission.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe {
+                    startActivityForResult(pdfFromGallery(), PDF)
+                }
         }
 
         photoFromCamera.setOnClickListener {
@@ -113,7 +120,7 @@ class CompressActivity : PmSupportActivity<CompressPm>() {
                     copyStreamToFile(inputStream, createImageFile("pdf"))
                 }
                 PHOTO -> {
-
+                    //do nothing
                 }
             }
             openFile(File(filePath))
@@ -137,6 +144,7 @@ class CompressActivity : PmSupportActivity<CompressPm>() {
     }
 
     private fun openFile(file: File) {
+        Timber.d("absolutePath = ${file.absolutePath}")
         val fileUri = FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, file)
         try {
             val intent = Intent(Intent.ACTION_VIEW)
