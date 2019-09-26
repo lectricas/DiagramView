@@ -41,4 +41,15 @@ public class LeetcodeTest {
 
         System.out.println("Correct");
     }
+
+    @Test
+    public void testLeet2() {
+        String one = null;
+        String two = one;
+
+        one = "SomeValue";
+        System.out.print("one = " + one);
+        System.out.println();
+        System.out.print("two = " + two);
+    }
 }
