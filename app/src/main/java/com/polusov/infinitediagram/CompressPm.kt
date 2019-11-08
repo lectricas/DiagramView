@@ -1,4 +1,4 @@
-package com.polusov.infinitediagram.tests.compress
+package com.polusov.infinitediagram
 
 import me.dmdev.rxpm.PresentationModel
 

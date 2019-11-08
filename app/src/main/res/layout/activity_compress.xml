@@ -7,39 +7,34 @@
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/photoFromGallery"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="PHOTO" />
-
-    <Button
-        android:id="@+id/pdfFromGallery"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="PDF" />
-
-    <Button
+        android:layout_margin="32dp"
         android:id="@+id/photoFromCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="PhotoFromCamera" />
+        android:text="Take photo" />
 
     <Button
+        android:layout_margin="32dp"
+        android:visibility="gone"
         android:id="@+id/showFile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="SHOWFILE" />
-
-
-    <Button
-        android:id="@+id/diagramActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Show diagram activity" />
+        android:text="Show file" />
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/imageView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+    <Button
+        android:layout_margin="32dp"
+        android:visibility="gone"
+        android:id="@+id/compressFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Compress and black and white" />
+
+    <Button
+        android:layout_margin="32dp"
+        android:visibility="gone"
+        android:id="@+id/deleteFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SendFile(will only delete file now)" />
+
 </LinearLayout>
